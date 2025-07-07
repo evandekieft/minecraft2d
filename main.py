@@ -9,7 +9,7 @@ pygame.init()
 
 # Constants
 WINDOW_SIZE = (800, 600)
-GRID_SIZE = 32  # Size of each grid cell in pixels
+GRID_SIZE = 16  # Size of each grid cell in pixels
 GRID_WIDTH = WINDOW_SIZE[0] // GRID_SIZE
 GRID_HEIGHT = WINDOW_SIZE[1] // GRID_SIZE
 
@@ -31,48 +31,34 @@ class Player:
         self.grid_x = GRID_WIDTH // 2
         self.grid_y = GRID_HEIGHT // 2
         self.color = BLUE
-        self.move_delay = 0.2  # seconds between moves
-        self.move_timer = 0
-        self.last_key = None
-        self.moved = False  # Tracks if we've moved on this key press
+        self.orientation = "north"  # north, south, east, west
 
     def handle_keydown(self, key):
         if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
-            if key != self.last_key:
-                self.moved = False
-            self.last_key = key
-            
-            # Immediate move on first key press
-            if not self.moved:
-                self._move_from_key(key)
-                self.moved = True
-                self.move_timer = 0  # Reset timer on new key press
+            if key == K_LEFT:
+                self.orientation = "west"
+            elif key == K_RIGHT:
+                self.orientation = "east"
+            elif key == K_UP:
+                self.orientation = "north"
+            elif key == K_DOWN:
+                self.orientation = "south"
 
     def handle_keyup(self, key):
-        if key == self.last_key:
-            self.last_key = None
-            self.moved = False
+        if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
+            dx, dy = 0, 0
+            if self.orientation == "west":
+                dx = -1
+            elif self.orientation == "east":
+                dx = 1
+            elif self.orientation == "north":
+                dy = -1
+            elif self.orientation == "south":
+                dy = 1
+            self.move(dx, dy)
 
     def update(self, dt):
-        if self.last_key is not None:
-            self.move_timer += dt
-            if self.move_timer >= self.move_delay:
-                self._move_from_key(self.last_key)
-                self.move_timer = 0
-
-    def _move_from_key(self, key):
-        dx, dy = 0, 0
-        if key == K_LEFT:
-            dx = -1
-        elif key == K_RIGHT:
-            dx = 1
-        elif key == K_UP:
-            dy = -1
-        elif key == K_DOWN:
-            dy = 1
-            
-        if dx != 0 or dy != 0:
-            self.move(dx, dy)
+        pass
 
     def move(self, dx, dy):
         self.grid_x = max(0, min(GRID_WIDTH - 1, self.grid_x + dx))
@@ -133,6 +119,22 @@ def main():
             GRID_SIZE - 4
         )
         pygame.draw.rect(screen, game.player.color, player_rect)
+        
+        # Draw orientation indicator
+        center_x = game.player.grid_x * GRID_SIZE + GRID_SIZE // 2
+        center_y = game.player.grid_y * GRID_SIZE + GRID_SIZE // 2
+        arrow_length = 4
+        
+        if game.player.orientation == "north":
+            end_x, end_y = center_x, center_y - arrow_length
+        elif game.player.orientation == "south":
+            end_x, end_y = center_x, center_y + arrow_length
+        elif game.player.orientation == "east":
+            end_x, end_y = center_x + arrow_length, center_y
+        elif game.player.orientation == "west":
+            end_x, end_y = center_x - arrow_length, center_y
+            
+        pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
 
         pygame.display.flip()
         clock.tick(60)

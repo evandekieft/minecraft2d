@@ -63,28 +63,31 @@ class TestGame:
         # Test negative world coordinates
         block = game.get_block(-10, -10)
         assert block is not None
-        assert block.type in ["grass", "wood"]
+        # With noise generation, any valid block type is acceptable
+        valid_types = {"water", "sand", "grass", "dirt", "wood", "stone", "coal", "lava", "diamond"}
+        assert block.type in valid_types
 
     def test_block_type_distribution(self):
         game = Game()
         
-        # Sample many blocks to verify distribution
+        # Sample many blocks to verify realistic distribution with noise generation
         block_types = []
-        for x in range(100):
-            for y in range(100):
+        for x in range(-50, 51):  # Wider range for noise-based generation
+            for y in range(-50, 51):
                 block = game.get_block(x, y)
                 block_types.append(block.type)
         
-        grass_count = block_types.count("grass")
-        wood_count = block_types.count("wood")
-        
-        # Should be roughly 90% grass, 10% wood blocks
+        # Count all block types
+        unique_types = set(block_types)
         total = len(block_types)
-        grass_ratio = grass_count / total
-        wood_ratio = wood_count / total
         
-        assert 0.85 < grass_ratio < 0.95
-        assert 0.05 < wood_ratio < 0.15
+        # With noise generation, we should have multiple terrain types
+        assert len(unique_types) >= 3, f"Expected at least 3 terrain types, got: {unique_types}"
+        
+        # Grass should still be the most common, but distribution will vary
+        grass_count = block_types.count("grass")
+        grass_ratio = grass_count / total
+        assert grass_ratio > 0.3, f"Grass ratio too low: {grass_ratio}"
 
     def test_chunk_generation_on_demand(self):
         game = Game()
@@ -122,15 +125,16 @@ class TestGame:
         assert isinstance(chunk[(0, 0)], Block)
 
 
-class TestBlockGeneration:
-    def test_only_grass_and_wood_generated(self):
+class TestNoiseGeneration:
+    def test_noise_based_generation(self):
         game = Game()
         
-        # Sample blocks and verify only grass and wood blocks (current generation)
+        # Sample blocks and verify they are valid terrain types
+        valid_types = {"water", "sand", "grass", "dirt", "wood", "stone", "coal", "lava", "diamond"}
         for x in range(20):
             for y in range(20):
                 block = game.get_block(x, y)
-                assert block.type in ["grass", "wood"]
+                assert block.type in valid_types, f"Invalid block type: {block.type}"
 
     def test_block_generation_deterministic(self):
         # Test that the same seed produces the same block
@@ -159,12 +163,12 @@ class TestBlockGeneration:
     def test_generated_blocks_are_valid_types(self):
         game = Game()
         
-        # Test that generated blocks are only the expected types
+        # Test that generated blocks are valid terrain types
+        valid_types = {"water", "sand", "grass", "dirt", "wood", "stone", "coal", "lava", "diamond"}
         for x in range(20):
             for y in range(20):
                 block = game.get_block(x, y)
-                # Current generation only creates grass and wood blocks
-                assert block.type in ["grass", "wood"], f"Unexpected block type: {block.type}"
+                assert block.type in valid_types, f"Invalid block type: {block.type}"
 
 
 class TestBlockReplacement:

@@ -10,7 +10,7 @@ class TestGame:
         assert game.camera is not None
         assert game.chunk_size == 16
         assert isinstance(game.chunks, dict)
-        assert len(game.chunks) == 9  # 3x3 initial chunks
+        assert len(game.chunks) == 25  # 5x5 initial chunks
 
     def test_chunk_generation_consistency(self):
         game = Game()

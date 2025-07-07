@@ -61,11 +61,11 @@ def main():
         
         for world_y in range(top, bottom + 1):
             for world_x in range(left, right + 1):
-                block = game.get_block(world_x, world_y)
-                if block:
-                    screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
-                    # Only draw if on screen (within game area)
-                    if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
+                screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
+                # Only draw if on screen (within game area)
+                if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
+                    block = game.get_block(world_x, world_y)
+                    if block:
                         # Check if this block is being mined
                         is_being_mined = (game.player.is_mining and 
                                         game.player.mining_target == (world_x, world_y))

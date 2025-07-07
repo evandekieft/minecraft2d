@@ -27,9 +27,11 @@ class Camera:
         half_screen_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
         half_screen_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
-        left = int(self.x - half_screen_width - 1)
-        right = int(self.x + half_screen_width + 1)
-        top = int(self.y - half_screen_height - 1)
-        bottom = int(self.y + half_screen_height + 1)
+        # Add extra margin to ensure complete coverage
+        margin = 2
+        left = int(self.x - half_screen_width - margin)
+        right = int(self.x + half_screen_width + margin)
+        top = int(self.y - half_screen_height - margin)
+        bottom = int(self.y + half_screen_height + margin)
         
         return left, right, top, bottom

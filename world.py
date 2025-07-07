@@ -77,12 +77,13 @@ class Game:
         self._generate_chunks_around_player()
     
     def _generate_chunks_around_player(self):
-        # Generate chunks in a 3x3 area around player
+        # Generate chunks in a 5x5 area around player to prevent black borders
+        # With 25x19 visible blocks and 16x16 chunks, we need more coverage
         player_chunk_x = self.player.world_x // self.chunk_size
         player_chunk_y = self.player.world_y // self.chunk_size
         
-        for cy in range(player_chunk_y - 1, player_chunk_y + 2):
-            for cx in range(player_chunk_x - 1, player_chunk_x + 2):
+        for cy in range(player_chunk_y - 2, player_chunk_y + 3):
+            for cx in range(player_chunk_x - 2, player_chunk_x + 3):
                 if (cx, cy) not in self.chunks:
                     self._generate_chunk(cx, cy)
     

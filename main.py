@@ -30,7 +30,7 @@ pygame.display.set_caption("Minecraft2D")
 clock = pygame.time.Clock()
 
 class Camera:
-    def __init__(self, smoothing=0.15):
+    def __init__(self, smoothing=0.05):
         self.x = 0.0
         self.y = 0.0
         self.smoothing = smoothing

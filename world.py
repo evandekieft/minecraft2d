@@ -30,20 +30,17 @@ class Block:
             "lava": RED,
             "diamond": BRIGHT_BLUE,
             "water": BLUE,
-            # Legacy support
-            "tree": LIGHT_BROWN,  # Trees render as wood blocks
         }
         return colors.get(block_type, WHITE)
 
     def _get_minable(self, block_type):
-        minable_blocks = {"wood", "stone", "diamond", "coal", "tree"}  # tree for legacy
+        minable_blocks = {"wood", "stone", "diamond", "coal"}
         return block_type in minable_blocks
 
     def _get_mining_difficulty(self, block_type):
         # Mining difficulty in health points (higher = takes longer)
         difficulties = {
             "wood": 3.0,   # 3 seconds with bare hands
-            "tree": 3.0,   # Legacy support
             "stone": 5.0,  # 5 seconds with bare hands  
             "coal": 4.0,   # 4 seconds with bare hands
             "diamond": 8.0, # 8 seconds with bare hands (very hard)
@@ -69,7 +66,6 @@ class Block:
             "stone": "stone", 
             "coal": "coal",
             "diamond": "diamond",
-            "tree": "wood",  # Legacy support
         }
         return mining_results.get(self.type, None)
 
@@ -78,9 +74,8 @@ class Block:
         replacements = {
             "wood": "grass",    # Wood becomes grass when mined
             "stone": "dirt",    # Stone becomes dirt when mined
-            "coal": "stone",    # Coal becomes stone when mined (coal is in stone)
-            "diamond": "stone", # Diamond becomes stone when mined
-            "tree": "dirt",     # Legacy support
+            "coal": "dirt",     # Coal becomes dirt when mined
+            "diamond": "dirt",  # Diamond becomes dirt when mined
         }
         return replacements.get(self.type, self.type)
 
@@ -119,7 +114,7 @@ class Game:
                 if random.random() < 0.9:
                     chunk[(x, y)] = Block("grass")
                 else:
-                    chunk[(x, y)] = Block("tree")
+                    chunk[(x, y)] = Block("wood")
         
         self.chunks[(chunk_x, chunk_y)] = chunk
     

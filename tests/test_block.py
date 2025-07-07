@@ -10,11 +10,6 @@ class TestBlock:
         assert block.walkable is True
         assert block.color == GREEN
 
-    def test_tree_block_properties(self):
-        block = Block("tree")
-        assert block.type == "tree"
-        assert block.walkable is False
-        assert block.color == LIGHT_BROWN
 
     def test_dirt_block_properties(self):
         block = Block("dirt")
@@ -82,7 +77,6 @@ class TestBlock:
         ("dirt", True),
         ("sand", True),
         ("water", False),
-        ("tree", False),
         ("wood", False),
         ("stone", False),
         ("coal", False),
@@ -97,7 +91,6 @@ class TestBlock:
         ("grass", GREEN),
         ("dirt", DARK_BROWN),
         ("sand", SAND_COLOR),
-        ("tree", LIGHT_BROWN),
         ("wood", LIGHT_BROWN),
         ("stone", GRAY),
         ("coal", BLACK),
@@ -112,12 +105,6 @@ class TestBlock:
 
 
 class TestBlockMining:
-    def test_tree_block_mining_properties(self):
-        block = Block("tree")
-        assert block.minable is True
-        assert block.mining_difficulty == 3.0
-        assert block.max_health == 3.0
-        assert block.current_health == 3.0
 
     def test_grass_block_not_minable(self):
         block = Block("grass")
@@ -157,7 +144,7 @@ class TestBlockMining:
         assert block.current_health == 8.0
 
     def test_reset_health(self):
-        block = Block("tree")
+        block = Block("wood")
         block.current_health = 1.0
         
         block.reset_health()
@@ -173,7 +160,7 @@ class TestBlockMining:
         assert block.current_health == block.max_health
 
     def test_take_damage_minable_not_destroyed(self):
-        block = Block("tree")
+        block = Block("wood")
         
         result = block.take_damage(1.0)
         
@@ -181,7 +168,7 @@ class TestBlockMining:
         assert block.current_health == 2.0
 
     def test_take_damage_minable_destroyed(self):
-        block = Block("tree")
+        block = Block("wood")
         
         result = block.take_damage(3.0)
         
@@ -189,7 +176,7 @@ class TestBlockMining:
         assert block.current_health == 0.0
 
     def test_take_damage_multiple_hits(self):
-        block = Block("tree")
+        block = Block("wood")
         
         result1 = block.take_damage(1.0)
         result2 = block.take_damage(1.0)
@@ -200,9 +187,6 @@ class TestBlockMining:
         assert result3 is True
         assert block.current_health == 0.0
 
-    def test_get_mining_result_tree(self):
-        block = Block("tree")
-        assert block.get_mining_result() == "wood"
 
     def test_get_mining_result_wood(self):
         block = Block("wood")
@@ -224,9 +208,6 @@ class TestBlockMining:
         block = Block("grass")
         assert block.get_mining_result() is None
 
-    def test_get_replacement_block_tree(self):
-        block = Block("tree")
-        assert block.get_replacement_block() == "dirt"
 
     def test_get_replacement_block_wood(self):
         block = Block("wood")
@@ -238,18 +219,17 @@ class TestBlockMining:
 
     def test_get_replacement_block_coal(self):
         block = Block("coal")
-        assert block.get_replacement_block() == "stone"
+        assert block.get_replacement_block() == "dirt"
 
     def test_get_replacement_block_diamond(self):
         block = Block("diamond")
-        assert block.get_replacement_block() == "stone"
+        assert block.get_replacement_block() == "dirt"
 
     def test_get_replacement_block_non_minable(self):
         block = Block("grass")
         assert block.get_replacement_block() == "grass"
 
     @pytest.mark.parametrize("block_type,expected_minable", [
-        ("tree", True),
         ("wood", True),
         ("stone", True),
         ("coal", True),

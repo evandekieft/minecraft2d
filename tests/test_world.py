@@ -63,7 +63,7 @@ class TestGame:
         # Test negative world coordinates
         block = game.get_block(-10, -10)
         assert block is not None
-        assert block.type in ["grass", "tree"]
+        assert block.type in ["grass", "wood"]
 
     def test_block_type_distribution(self):
         game = Game()
@@ -76,15 +76,15 @@ class TestGame:
                 block_types.append(block.type)
         
         grass_count = block_types.count("grass")
-        tree_count = block_types.count("tree")
+        wood_count = block_types.count("wood")
         
-        # Should be roughly 90% grass, 10% trees
+        # Should be roughly 90% grass, 10% wood blocks
         total = len(block_types)
         grass_ratio = grass_count / total
-        tree_ratio = tree_count / total
+        wood_ratio = wood_count / total
         
         assert 0.85 < grass_ratio < 0.95
-        assert 0.05 < tree_ratio < 0.15
+        assert 0.05 < wood_ratio < 0.15
 
     def test_chunk_generation_on_demand(self):
         game = Game()
@@ -123,14 +123,14 @@ class TestGame:
 
 
 class TestBlockGeneration:
-    def test_only_grass_and_trees_generated(self):
+    def test_only_grass_and_wood_generated(self):
         game = Game()
         
-        # Sample blocks and verify only grass and trees (current generation)
+        # Sample blocks and verify only grass and wood blocks (current generation)
         for x in range(20):
             for y in range(20):
                 block = game.get_block(x, y)
-                assert block.type in ["grass", "tree"]
+                assert block.type in ["grass", "wood"]
 
     def test_block_generation_deterministic(self):
         # Test that the same seed produces the same block
@@ -152,7 +152,7 @@ class TestBlockGeneration:
                 block = game.get_block(x, y)
                 blocks.append(block.type)
         
-        # Should have both grass and trees (not all the same)
+        # Should have both grass and wood blocks (not all the same)
         unique_types = set(blocks)
         assert len(unique_types) > 1
 
@@ -163,8 +163,8 @@ class TestBlockGeneration:
         for x in range(20):
             for y in range(20):
                 block = game.get_block(x, y)
-                # Current generation only creates grass and tree blocks
-                assert block.type in ["grass", "tree"], f"Unexpected block type: {block.type}"
+                # Current generation only creates grass and wood blocks
+                assert block.type in ["grass", "wood"], f"Unexpected block type: {block.type}"
 
 
 class TestBlockReplacement:

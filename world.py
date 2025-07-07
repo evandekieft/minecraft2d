@@ -1,5 +1,6 @@
 import random
-from constants import GREEN, LIGHT_BROWN, DARK_BROWN, BLUE, WHITE
+from constants import (GREEN, LIGHT_BROWN, DARK_BROWN, BLUE, WHITE, BRIGHT_BLUE, 
+                      RED, BLACK, SAND_COLOR, GRAY)
 from player import Player
 from camera import Camera
 
@@ -15,27 +16,37 @@ class Block:
         self.current_health = self.max_health
     
     def _get_walkable(self, block_type):
-        walkable_blocks = {"grass", "dirt", "water"}
+        walkable_blocks = {"grass", "dirt", "sand"}
         return block_type in walkable_blocks
     
     def _get_color(self, block_type):
         colors = {
             "grass": GREEN,
-            "tree": LIGHT_BROWN,
-            "wood": LIGHT_BROWN,  # Wood blocks look like trees for now
             "dirt": DARK_BROWN,
-            "water": BLUE
+            "sand": SAND_COLOR,
+            "wood": LIGHT_BROWN,
+            "stone": GRAY,
+            "coal": BLACK,
+            "lava": RED,
+            "diamond": BRIGHT_BLUE,
+            "water": BLUE,
+            # Legacy support
+            "tree": LIGHT_BROWN,  # Trees render as wood blocks
         }
         return colors.get(block_type, WHITE)
 
     def _get_minable(self, block_type):
-        minable_blocks = {"tree"}
+        minable_blocks = {"wood", "stone", "diamond", "coal", "tree"}  # tree for legacy
         return block_type in minable_blocks
 
     def _get_mining_difficulty(self, block_type):
         # Mining difficulty in health points (higher = takes longer)
         difficulties = {
-            "tree": 3.0,  # Takes 3 seconds with bare hands (1 damage/sec)
+            "wood": 3.0,   # 3 seconds with bare hands
+            "tree": 3.0,   # Legacy support
+            "stone": 5.0,  # 5 seconds with bare hands  
+            "coal": 4.0,   # 4 seconds with bare hands
+            "diamond": 8.0, # 8 seconds with bare hands (very hard)
         }
         return difficulties.get(block_type, 1.0)
 
@@ -54,14 +65,22 @@ class Block:
     def get_mining_result(self):
         """Get the item(s) that should be added to inventory when this block is mined"""
         mining_results = {
-            "tree": "wood",
+            "wood": "wood",
+            "stone": "stone", 
+            "coal": "coal",
+            "diamond": "diamond",
+            "tree": "wood",  # Legacy support
         }
         return mining_results.get(self.type, None)
 
     def get_replacement_block(self):
         """Get the block type that should replace this block when mined"""
         replacements = {
-            "tree": "dirt",
+            "wood": "grass",    # Wood becomes grass when mined
+            "stone": "dirt",    # Stone becomes dirt when mined
+            "coal": "stone",    # Coal becomes stone when mined (coal is in stone)
+            "diamond": "stone", # Diamond becomes stone when mined
+            "tree": "dirt",     # Legacy support
         }
         return replacements.get(self.type, self.type)
 

@@ -85,10 +85,10 @@ class TestCamera:
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
         half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
-        assert left == -half_width - 1
-        assert right == half_width + 1
-        assert top == -half_height - 1
-        assert bottom == half_height + 1
+        assert left == -half_width - 2
+        assert right == half_width + 2
+        assert top == -half_height - 2
+        assert bottom == half_height + 2
 
     def test_get_visible_bounds_offset(self):
         camera = Camera()
@@ -101,10 +101,10 @@ class TestCamera:
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
         half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
-        assert left == 10 - half_width - 1
-        assert right == 10 + half_width + 1
-        assert top == 20 - half_height - 1
-        assert bottom == 20 + half_height + 1
+        assert left == 10 - half_width - 2
+        assert right == 10 + half_width + 2
+        assert top == 20 - half_height - 2
+        assert bottom == 20 + half_height + 2
 
     def test_visible_bounds_include_buffer(self):
         camera = Camera()
@@ -113,15 +113,15 @@ class TestCamera:
         
         left, right, top, bottom = camera.get_visible_bounds()
         
-        # Bounds should include 1-unit buffer on each side
+        # Bounds should include 2-unit buffer on each side
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
         half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
         visible_width = right - left + 1
         visible_height = bottom - top + 1
         
-        assert visible_width == 2 * half_width + 3  # +3 for buffer on both sides plus center
-        assert visible_height == 2 * half_height + 3
+        assert visible_width == 2 * half_width + 5  # +5 for buffer on both sides plus center
+        assert visible_height == 2 * half_height + 5
 
     @pytest.mark.parametrize("target_x,target_y,smoothing", [
         (0, 0, 0.1),

@@ -126,7 +126,7 @@ class TestBlockGeneration:
     def test_only_grass_and_trees_generated(self):
         game = Game()
         
-        # Sample blocks and verify only grass and trees
+        # Sample blocks and verify only grass and trees (current generation)
         for x in range(20):
             for y in range(20):
                 block = game.get_block(x, y)
@@ -155,6 +155,16 @@ class TestBlockGeneration:
         # Should have both grass and trees (not all the same)
         unique_types = set(blocks)
         assert len(unique_types) > 1
+
+    def test_generated_blocks_are_valid_types(self):
+        game = Game()
+        
+        # Test that generated blocks are only the expected types
+        for x in range(20):
+            for y in range(20):
+                block = game.get_block(x, y)
+                # Current generation only creates grass and tree blocks
+                assert block.type in ["grass", "tree"], f"Unexpected block type: {block.type}"
 
 
 class TestBlockReplacement:
@@ -196,3 +206,39 @@ class TestBlockReplacement:
         # Should still be able to access neighboring blocks
         neighbor = game.get_block(1, 0)
         assert neighbor is not None
+
+    def test_replace_block_with_all_new_types(self):
+        game = Game()
+        
+        # Test replacing with all new block types
+        new_block_types = ["sand", "wood", "stone", "coal", "lava", "diamond", "water"]
+        
+        for i, block_type in enumerate(new_block_types):
+            x, y = i, 0
+            result = game.replace_block(x, y, block_type)
+            
+            assert result is True
+            block = game.get_block(x, y)
+            assert block is not None
+            assert block.type == block_type
+
+    def test_new_block_types_properties(self):
+        game = Game()
+        
+        # Test that new block types have correct properties
+        test_cases = [
+            ("sand", True, False),    # walkable, not minable
+            ("wood", False, True),    # not walkable, minable
+            ("stone", False, True),   # not walkable, minable
+            ("coal", False, True),    # not walkable, minable
+            ("lava", False, False),   # not walkable, not minable
+            ("diamond", False, True), # not walkable, minable
+            ("water", False, False),  # not walkable, not minable
+        ]
+        
+        for block_type, expected_walkable, expected_minable in test_cases:
+            game.replace_block(0, 0, block_type)
+            block = game.get_block(0, 0)
+            
+            assert block.walkable == expected_walkable, f"{block_type} walkable mismatch"
+            assert block.minable == expected_minable, f"{block_type} minable mismatch"

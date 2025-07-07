@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 from pygame.locals import (
     QUIT, KEYDOWN, KEYUP, K_LEFT, K_RIGHT, K_UP, K_DOWN
 )
@@ -19,12 +20,33 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BROWN = (139, 69, 19)
+LIGHT_BROWN = (205, 133, 63)
+DARK_BROWN = (101, 67, 33)
 
 # Set up the display
 screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Minecraft2D")
 
 clock = pygame.time.Clock()
+
+class Block:
+    def __init__(self, block_type):
+        self.type = block_type
+        self.walkable = self._get_walkable(block_type)
+        self.color = self._get_color(block_type)
+    
+    def _get_walkable(self, block_type):
+        walkable_blocks = {"grass", "dirt", "water"}
+        return block_type in walkable_blocks
+    
+    def _get_color(self, block_type):
+        colors = {
+            "grass": GREEN,
+            "tree": LIGHT_BROWN,
+            "dirt": DARK_BROWN,
+            "water": BLUE
+        }
+        return colors.get(block_type, WHITE)
 
 class Player:
     def __init__(self):
@@ -44,7 +66,7 @@ class Player:
             elif key == K_DOWN:
                 self.orientation = "south"
 
-    def handle_keyup(self, key):
+    def handle_keyup(self, key, game):
         if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
             dx, dy = 0, 0
             if self.orientation == "west":
@@ -55,33 +77,48 @@ class Player:
                 dy = -1
             elif self.orientation == "south":
                 dy = 1
-            self.move(dx, dy)
+            self.move(dx, dy, game)
 
     def update(self, dt):
         pass
 
-    def move(self, dx, dy):
-        self.grid_x = max(0, min(GRID_WIDTH - 1, self.grid_x + dx))
-        self.grid_y = max(0, min(GRID_HEIGHT - 1, self.grid_y + dy))
+    def move(self, dx, dy, game):
+        new_x = self.grid_x + dx
+        new_y = self.grid_y + dy
+        
+        # Check bounds
+        if new_x < 0 or new_x >= GRID_WIDTH or new_y < 0 or new_y >= GRID_HEIGHT:
+            return
+        
+        # Check if target block is walkable
+        target_block = game.grid[new_y][new_x]
+        if target_block and target_block.walkable:
+            self.grid_x = new_x
+            self.grid_y = new_y
 
 class Game:
     def __init__(self):
         self.player = Player()
-        self.grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+        self.grid = [[None for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
         
-        # Initialize world with some blocks
+        # Initialize world with random grass and trees
         for y in range(GRID_HEIGHT):
             for x in range(GRID_WIDTH):
-                # Add some ground blocks
-                if y >= GRID_HEIGHT - 2:
-                    self.grid[y][x] = 1  # Ground block
+                # 90% grass, 10% trees
+                if random.random() < 0.9:
+                    self.grid[y][x] = Block("grass")
+                else:
+                    self.grid[y][x] = Block("tree")
+        
+        # Ensure player starts on grass
+        self.grid[self.player.grid_y][self.player.grid_x] = Block("grass")
 
-def draw_block(x, y, type):
+def draw_block(x, y, block):
     rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
-    if type == 0:  # Air
+    if block:
+        pygame.draw.rect(screen, block.color, rect)
+    else:
         pygame.draw.rect(screen, WHITE, rect, 1)
-    elif type == 1:  # Ground
-        pygame.draw.rect(screen, BROWN, rect)
 
 def main():
     game = Game()
@@ -98,7 +135,7 @@ def main():
             elif event.type == KEYDOWN:
                 game.player.handle_keydown(event.key)
             elif event.type == KEYUP:
-                game.player.handle_keyup(event.key)
+                game.player.handle_keyup(event.key, game)
 
         # Update game state
         game.player.update(dt)

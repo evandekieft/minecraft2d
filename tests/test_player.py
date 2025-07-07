@@ -121,3 +121,131 @@ class TestPlayer:
         
         assert player.world_x == initial_x
         assert player.world_y == initial_y
+
+
+class TestInventory:
+    def test_inventory_initialization(self):
+        player = Player()
+        assert player.inventory == {}
+        assert player.active_slot == 0
+
+    def test_add_to_inventory_new_item(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        
+        assert player.inventory["tree"] == 1
+
+    def test_add_to_inventory_existing_item(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        player.add_to_inventory("tree")
+        
+        assert player.inventory["tree"] == 2
+
+    def test_add_multiple_item_types(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        player.add_to_inventory("grass")
+        player.add_to_inventory("tree")
+        
+        assert player.inventory["tree"] == 2
+        assert player.inventory["grass"] == 1
+
+    def test_get_top_inventory_items_empty(self):
+        player = Player()
+        top_items = player.get_top_inventory_items(5)
+        
+        assert top_items == []
+
+    def test_get_top_inventory_items_sorted(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        player.add_to_inventory("grass")
+        player.add_to_inventory("tree")
+        player.add_to_inventory("tree")
+        player.add_to_inventory("grass")
+        
+        top_items = player.get_top_inventory_items(5)
+        
+        assert top_items == [("tree", 3), ("grass", 2)]
+
+    def test_get_top_inventory_items_limit(self):
+        player = Player()
+        for i in range(10):
+            for j in range(i + 1):
+                player.add_to_inventory(f"block_{i}")
+        
+        top_items = player.get_top_inventory_items(3)
+        
+        assert len(top_items) == 3
+        assert top_items[0][1] >= top_items[1][1] >= top_items[2][1]
+
+    def test_get_active_block_type_empty(self):
+        player = Player()
+        assert player.get_active_block_type() is None
+
+    def test_get_active_block_type_valid(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        player.add_to_inventory("grass")
+        player.active_slot = 0
+        
+        assert player.get_active_block_type() == "tree"
+
+    def test_get_active_block_type_out_of_range(self):
+        player = Player()
+        player.add_to_inventory("tree")
+        player.active_slot = 5
+        
+        assert player.get_active_block_type() is None
+
+    def test_collect_block_tree_in_front(self):
+        player = Player()
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.type = "tree"
+        mock_game.get_block.return_value = mock_block
+        
+        player.orientation = "north"
+        player.collect_block(mock_game)
+        
+        assert player.inventory["tree"] == 1
+        mock_game.get_block.assert_called_once_with(0, -1)
+
+    def test_collect_block_non_tree(self):
+        player = Player()
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.type = "grass"
+        mock_game.get_block.return_value = mock_block
+        
+        player.collect_block(mock_game)
+        
+        assert player.inventory == {}
+
+    def test_collect_block_no_block(self):
+        player = Player()
+        mock_game = Mock()
+        mock_game.get_block.return_value = None
+        
+        player.collect_block(mock_game)
+        
+        assert player.inventory == {}
+
+    @pytest.mark.parametrize("orientation,expected_dx,expected_dy", [
+        ("north", 0, -1),
+        ("south", 0, 1),
+        ("east", 1, 0),
+        ("west", -1, 0),
+    ])
+    def test_collect_block_directions(self, orientation, expected_dx, expected_dy):
+        player = Player()
+        player.orientation = orientation
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.type = "tree"
+        mock_game.get_block.return_value = mock_block
+        
+        player.collect_block(mock_game)
+        
+        mock_game.get_block.assert_called_once_with(expected_dx, expected_dy)

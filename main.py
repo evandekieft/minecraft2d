@@ -1,7 +1,7 @@
 import pygame
 import sys
 from pygame.locals import QUIT, KEYDOWN, KEYUP
-from constants import WINDOW_SIZE, GRID_SIZE, BLACK, WHITE
+from constants import WINDOW_SIZE, GRID_SIZE, BLACK, WHITE, GAME_HEIGHT, INVENTORY_HEIGHT
 from world import Game
 
 # Initialize PyGame
@@ -53,8 +53,8 @@ def main():
                 block = game.get_block(world_x, world_y)
                 if block:
                     screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
-                    # Only draw if on screen
-                    if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < WINDOW_SIZE[1]:
+                    # Only draw if on screen (within game area)
+                    if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
                         draw_block(screen_x, screen_y, block)
         
         # Draw player
@@ -83,8 +83,60 @@ def main():
             
         pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
 
+        # Draw inventory
+        draw_inventory(screen, game.player)
+
         pygame.display.flip()
         clock.tick(60)
+
+
+def draw_inventory(screen, player):
+    # Draw black inventory background
+    inventory_rect = pygame.Rect(0, GAME_HEIGHT, WINDOW_SIZE[0], INVENTORY_HEIGHT)
+    pygame.draw.rect(screen, BLACK, inventory_rect)
+    
+    # Get top 5 inventory items
+    top_items = player.get_top_inventory_items(5)
+    
+    # Calculate slot dimensions and positions
+    slot_size = 50
+    slot_spacing = 10
+    total_width = 5 * slot_size + 4 * slot_spacing
+    start_x = (WINDOW_SIZE[0] - total_width) // 2
+    start_y = GAME_HEIGHT + (INVENTORY_HEIGHT - slot_size) // 2
+    
+    # Draw 5 inventory slots
+    for i in range(5):
+        slot_x = start_x + i * (slot_size + slot_spacing)
+        slot_y = start_y
+        
+        # Draw slot background
+        slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+        pygame.draw.rect(screen, (64, 64, 64), slot_rect)  # Dark gray
+        
+        # Draw border (highlight active slot)
+        border_color = WHITE if i == player.active_slot else (128, 128, 128)
+        border_width = 3 if i == player.active_slot else 1
+        pygame.draw.rect(screen, border_color, slot_rect, border_width)
+        
+        # Draw block if available
+        if i < len(top_items):
+            block_type, count = top_items[i]
+            
+            # Get block color (import from world to get Block class)
+            from world import Block
+            temp_block = Block(block_type)
+            
+            # Draw block color
+            block_rect = pygame.Rect(slot_x + 5, slot_y + 5, slot_size - 10, slot_size - 30)
+            pygame.draw.rect(screen, temp_block.color, block_rect)
+            
+            # Draw count text
+            font = pygame.font.Font(None, 24)
+            count_text = font.render(str(count), True, WHITE)
+            text_x = slot_x + slot_size // 2 - count_text.get_width() // 2
+            text_y = slot_y + slot_size - 20
+            screen.blit(count_text, (text_x, text_y))
 
 if __name__ == "__main__":
     main()

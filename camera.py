@@ -1,4 +1,4 @@
-from constants import WINDOW_SIZE, GRID_SIZE
+from constants import WINDOW_SIZE, GRID_SIZE, GAME_HEIGHT
 
 
 class Camera:
@@ -17,15 +17,15 @@ class Camera:
         self.y += (target_camera_y - self.y) * self.smoothing
     
     def world_to_screen(self, world_x, world_y):
-        # Convert world coordinates to screen coordinates
+        # Convert world coordinates to screen coordinates (centered in game area)
         screen_x = (world_x - self.x) * GRID_SIZE + WINDOW_SIZE[0] // 2
-        screen_y = (world_y - self.y) * GRID_SIZE + WINDOW_SIZE[1] // 2
+        screen_y = (world_y - self.y) * GRID_SIZE + GAME_HEIGHT // 2
         return screen_x, screen_y
     
     def get_visible_bounds(self):
-        # Calculate which world coordinates are visible
+        # Calculate which world coordinates are visible (only game area)
         half_screen_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
-        half_screen_height = WINDOW_SIZE[1] // (2 * GRID_SIZE)
+        half_screen_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
         left = int(self.x - half_screen_width - 1)
         right = int(self.x + half_screen_width + 1)

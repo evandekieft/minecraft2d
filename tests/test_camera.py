@@ -1,6 +1,6 @@
 import pytest
 from camera import Camera
-from constants import WINDOW_SIZE, GRID_SIZE
+from constants import WINDOW_SIZE, GRID_SIZE, GAME_HEIGHT
 
 
 class TestCamera:
@@ -40,7 +40,7 @@ class TestCamera:
         screen_x, screen_y = camera.world_to_screen(0, 0)
         
         expected_x = WINDOW_SIZE[0] // 2
-        expected_y = WINDOW_SIZE[1] // 2
+        expected_y = GAME_HEIGHT // 2
         
         assert screen_x == expected_x
         assert screen_y == expected_y
@@ -54,7 +54,7 @@ class TestCamera:
         screen_x, screen_y = camera.world_to_screen(5, 10)
         
         expected_x = WINDOW_SIZE[0] // 2
-        expected_y = WINDOW_SIZE[1] // 2
+        expected_y = GAME_HEIGHT // 2
         
         assert screen_x == expected_x
         assert screen_y == expected_y
@@ -83,7 +83,7 @@ class TestCamera:
         
         # Should be symmetric around origin
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
-        half_height = WINDOW_SIZE[1] // (2 * GRID_SIZE)
+        half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
         assert left == -half_width - 1
         assert right == half_width + 1
@@ -99,7 +99,7 @@ class TestCamera:
         
         # Should be offset by camera position
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
-        half_height = WINDOW_SIZE[1] // (2 * GRID_SIZE)
+        half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
         assert left == 10 - half_width - 1
         assert right == 10 + half_width + 1
@@ -115,7 +115,7 @@ class TestCamera:
         
         # Bounds should include 1-unit buffer on each side
         half_width = WINDOW_SIZE[0] // (2 * GRID_SIZE)
-        half_height = WINDOW_SIZE[1] // (2 * GRID_SIZE)
+        half_height = GAME_HEIGHT // (2 * GRID_SIZE)
         
         visible_width = right - left + 1
         visible_height = bottom - top + 1
@@ -156,4 +156,4 @@ class TestCamera:
         assert left_screen_x < 0
         assert right_screen_x > WINDOW_SIZE[0]
         assert left_screen_y < 0
-        assert right_screen_y > WINDOW_SIZE[1]
+        assert right_screen_y > GAME_HEIGHT

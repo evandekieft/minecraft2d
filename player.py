@@ -10,8 +10,11 @@ class Player:
         self.orientation = "north"  # north, south, east, west
         self.inventory = {}  # {block_type: count}
         self.active_slot = 0  # Index of active inventory slot (0-4)
+        self.is_mining = False
+        self.mining_target = None  # (x, y) coordinates of block being mined
+        self.mining_damage_rate = 1.0  # Base mining rate (damage per second)
 
-    def handle_keydown(self, key):
+    def handle_keydown(self, key, game=None):
         if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
             if key == K_LEFT:
                 self.orientation = "west"
@@ -21,6 +24,8 @@ class Player:
                 self.orientation = "north"
             elif key == K_DOWN:
                 self.orientation = "south"
+        elif key == K_SPACE and game:
+            self.start_mining(game)
 
     def handle_keyup(self, key, game):
         if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
@@ -35,11 +40,12 @@ class Player:
                 dy = 1
             self.move(dx, dy, game)
         elif key == K_SPACE:
-            self.collect_block(game)
+            self.stop_mining(game)
 
-    def update(self, dt):
-        # Currently no per-frame updates needed for player
-        pass
+    def update(self, dt, game=None):
+        # Handle continuous mining
+        if self.is_mining and game and self.mining_target:
+            self.process_mining(dt, game)
 
     def move(self, dx, dy, game):
         new_x = self.world_x + dx
@@ -50,9 +56,12 @@ class Player:
         if target_block and target_block.walkable:
             self.world_x = new_x
             self.world_y = new_y
+            # Stop mining if player moves
+            if self.is_mining:
+                self.stop_mining(game)
 
-    def collect_block(self, game):
-        # Get block in front of player based on orientation
+    def get_target_position(self):
+        """Get the position of the block the player is facing"""
         dx, dy = 0, 0
         if self.orientation == "west":
             dx = -1
@@ -63,12 +72,62 @@ class Player:
         elif self.orientation == "south":
             dy = 1
         
-        target_x = self.world_x + dx
-        target_y = self.world_y + dy
+        return self.world_x + dx, self.world_y + dy
+
+    def start_mining(self, game):
+        """Start mining the block the player is facing"""
+        target_x, target_y = self.get_target_position()
         target_block = game.get_block(target_x, target_y)
         
-        if target_block and target_block.type == "tree":
-            self.add_to_inventory(target_block.type)
+        if target_block and target_block.minable:
+            self.is_mining = True
+            self.mining_target = (target_x, target_y)
+
+    def stop_mining(self, game):
+        """Stop mining and reset block health"""
+        if self.is_mining and self.mining_target and game:
+            target_x, target_y = self.mining_target
+            target_block = game.get_block(target_x, target_y)
+            if target_block:
+                target_block.reset_health()
+        
+        self.is_mining = False
+        self.mining_target = None
+
+    def process_mining(self, dt, game):
+        """Process mining damage over time"""
+        if not self.mining_target:
+            return
+        
+        target_x, target_y = self.mining_target
+        target_block = game.get_block(target_x, target_y)
+        
+        if not target_block or not target_block.minable:
+            self.stop_mining(game)
+            return
+        
+        # Calculate mining damage this frame
+        damage = self.mining_damage_rate * dt
+        
+        # Apply damage to block
+        if target_block.take_damage(damage):
+            # Block is destroyed
+            self.complete_mining(game, target_x, target_y, target_block)
+
+    def complete_mining(self, game, target_x, target_y, target_block):
+        """Complete the mining process - add items to inventory and replace block"""
+        # Add mined item to inventory
+        mining_result = target_block.get_mining_result()
+        if mining_result:
+            self.add_to_inventory(mining_result)
+        
+        # Replace the block
+        replacement_type = target_block.get_replacement_block()
+        game.replace_block(target_x, target_y, replacement_type)
+        
+        # Stop mining
+        self.is_mining = False
+        self.mining_target = None
 
     def add_to_inventory(self, block_type):
         if block_type in self.inventory:

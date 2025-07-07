@@ -155,3 +155,44 @@ class TestBlockGeneration:
         # Should have both grass and trees (not all the same)
         unique_types = set(blocks)
         assert len(unique_types) > 1
+
+
+class TestBlockReplacement:
+    def test_replace_block_success(self):
+        game = Game()
+        
+        # Ensure there's a block at (0, 0)
+        original_block = game.get_block(0, 0)
+        assert original_block is not None
+        original_type = original_block.type
+        
+        # Replace it with a different type
+        new_type = "dirt" if original_type != "dirt" else "grass"
+        result = game.replace_block(0, 0, new_type)
+        
+        assert result is True
+        new_block = game.get_block(0, 0)
+        assert new_block.type == new_type
+
+    def test_replace_block_nonexistent_chunk(self):
+        game = Game()
+        
+        # Try to replace a block in a chunk that doesn't exist
+        result = game.replace_block(1000, 1000, "dirt")
+        
+        assert result is False
+
+    def test_replace_block_maintains_chunk_structure(self):
+        game = Game()
+        
+        # Replace a block and ensure chunk structure is maintained
+        game.replace_block(0, 0, "wood")
+        
+        # Should still be able to access the block
+        block = game.get_block(0, 0)
+        assert block is not None
+        assert block.type == "wood"
+        
+        # Should still be able to access neighboring blocks
+        neighbor = game.get_block(1, 0)
+        assert neighbor is not None

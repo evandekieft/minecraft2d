@@ -199,53 +199,199 @@ class TestInventory:
         
         assert player.get_active_block_type() is None
 
-    def test_collect_block_tree_in_front(self):
+
+
+class TestMining:
+    def test_mining_initialization(self):
         player = Player()
-        mock_game = Mock()
-        mock_block = Mock()
-        mock_block.type = "tree"
-        mock_game.get_block.return_value = mock_block
+        assert player.is_mining is False
+        assert player.mining_target is None
+        assert player.mining_damage_rate == 1.0
+
+    def test_get_target_position(self):
+        player = Player()
+        player.world_x = 5
+        player.world_y = 10
         
         player.orientation = "north"
-        player.collect_block(mock_game)
+        assert player.get_target_position() == (5, 9)
         
-        assert player.inventory["tree"] == 1
-        mock_game.get_block.assert_called_once_with(0, -1)
+        player.orientation = "south"
+        assert player.get_target_position() == (5, 11)
+        
+        player.orientation = "east"
+        assert player.get_target_position() == (6, 10)
+        
+        player.orientation = "west"
+        assert player.get_target_position() == (4, 10)
 
-    def test_collect_block_non_tree(self):
+    def test_start_mining_minable_block(self):
         player = Player()
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.type = "grass"
+        mock_block.minable = True
         mock_game.get_block.return_value = mock_block
         
-        player.collect_block(mock_game)
+        player.start_mining(mock_game)
         
-        assert player.inventory == {}
+        assert player.is_mining is True
+        assert player.mining_target == (0, -1)  # North of origin
 
-    def test_collect_block_no_block(self):
+    def test_start_mining_non_minable_block(self):
+        player = Player()
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.minable = False
+        mock_game.get_block.return_value = mock_block
+        
+        player.start_mining(mock_game)
+        
+        assert player.is_mining is False
+        assert player.mining_target is None
+
+    def test_start_mining_no_block(self):
         player = Player()
         mock_game = Mock()
         mock_game.get_block.return_value = None
         
-        player.collect_block(mock_game)
+        player.start_mining(mock_game)
         
-        assert player.inventory == {}
+        assert player.is_mining is False
+        assert player.mining_target is None
 
-    @pytest.mark.parametrize("orientation,expected_dx,expected_dy", [
-        ("north", 0, -1),
-        ("south", 0, 1),
-        ("east", 1, 0),
-        ("west", -1, 0),
-    ])
-    def test_collect_block_directions(self, orientation, expected_dx, expected_dy):
+    def test_stop_mining_resets_block_health(self):
         player = Player()
-        player.orientation = orientation
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.type = "tree"
         mock_game.get_block.return_value = mock_block
         
-        player.collect_block(mock_game)
+        player.stop_mining(mock_game)
         
-        mock_game.get_block.assert_called_once_with(expected_dx, expected_dy)
+        assert player.is_mining is False
+        assert player.mining_target is None
+        mock_block.reset_health.assert_called_once()
+
+    def test_stop_mining_no_target(self):
+        player = Player()
+        player.is_mining = False
+        player.mining_target = None
+        
+        mock_game = Mock()
+        
+        player.stop_mining(mock_game)
+        
+        assert player.is_mining is False
+        assert player.mining_target is None
+
+    def test_process_mining_damages_block(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.minable = True
+        mock_block.take_damage.return_value = False  # Block not destroyed
+        mock_game.get_block.return_value = mock_block
+        
+        player.process_mining(0.5, mock_game)  # 0.5 seconds
+        
+        mock_block.take_damage.assert_called_once_with(0.5)  # 1.0 * 0.5
+
+    def test_process_mining_destroys_block(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.minable = True
+        mock_block.take_damage.return_value = True  # Block destroyed
+        mock_block.get_mining_result.return_value = "wood"
+        mock_block.get_replacement_block.return_value = "dirt"
+        mock_game.get_block.return_value = mock_block
+        
+        player.process_mining(1.0, mock_game)
+        
+        mock_block.take_damage.assert_called_once_with(1.0)
+        assert player.inventory["wood"] == 1
+        mock_game.replace_block.assert_called_once_with(5, 10, "dirt")
+        assert player.is_mining is False
+        assert player.mining_target is None
+
+    def test_process_mining_no_target(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = None
+        
+        mock_game = Mock()
+        
+        player.process_mining(1.0, mock_game)
+        
+        mock_game.get_block.assert_not_called()
+
+    def test_process_mining_invalid_block(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_game.get_block.return_value = None
+        
+        player.process_mining(1.0, mock_game)
+        
+        assert player.is_mining is False
+        assert player.mining_target is None
+
+    def test_complete_mining_no_result(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.get_mining_result.return_value = None
+        mock_block.get_replacement_block.return_value = "dirt"
+        
+        player.complete_mining(mock_game, 5, 10, mock_block)
+        
+        assert player.inventory == {}
+        mock_game.replace_block.assert_called_once_with(5, 10, "dirt")
+        assert player.is_mining is False
+
+    def test_move_stops_mining(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_walkable_block = Mock()
+        mock_walkable_block.walkable = True
+        mock_mining_block = Mock()
+        mock_game.get_block.side_effect = [mock_walkable_block, mock_mining_block]
+        
+        player.move(1, 0, mock_game)
+        
+        assert player.world_x == 1
+        assert player.world_y == 0
+        assert player.is_mining is False
+        assert player.mining_target is None
+        mock_mining_block.reset_health.assert_called_once()
+
+    def test_update_processes_mining(self):
+        player = Player()
+        player.is_mining = True
+        player.mining_target = (5, 10)
+        
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.minable = True
+        mock_block.take_damage.return_value = False
+        mock_game.get_block.return_value = mock_block
+        
+        player.update(0.1, mock_game)
+        
+        mock_block.take_damage.assert_called_once_with(0.1)

@@ -12,10 +12,21 @@ screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Minecraft2D")
 
 
-def draw_block(screen_x, screen_y, block):
+def draw_block(screen_x, screen_y, block, is_being_mined=False, mining_progress=0.0):
     rect = pygame.Rect(screen_x, screen_y, GRID_SIZE, GRID_SIZE)
     if block:
-        pygame.draw.rect(screen, block.color, rect)
+        color = block.color
+        
+        # Apply blinking effect if being mined
+        if is_being_mined:
+            # Blink faster as mining progresses
+            blink_rate = 2.0 + mining_progress * 8.0  # 2-10 Hz
+            blink_phase = pygame.time.get_ticks() / 1000.0 * blink_rate
+            if int(blink_phase) % 2 == 0:
+                # Darken the color during blink
+                color = tuple(max(0, int(c * 0.4)) for c in color)
+        
+        pygame.draw.rect(screen, color, rect)
     else:
         pygame.draw.rect(screen, WHITE, rect, 1)
 
@@ -33,12 +44,12 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == KEYDOWN:
-                game.player.handle_keydown(event.key)
+                game.player.handle_keydown(event.key, game)
             elif event.type == KEYUP:
                 game.player.handle_keyup(event.key, game)
 
         # Update game state
-        game.player.update(dt)
+        game.player.update(dt, game)
         game.camera.update(game.player.world_x, game.player.world_y, dt)
         game._generate_chunks_around_player()  # Generate new chunks as needed
 
@@ -55,7 +66,14 @@ def main():
                     screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
                     # Only draw if on screen (within game area)
                     if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
-                        draw_block(screen_x, screen_y, block)
+                        # Check if this block is being mined
+                        is_being_mined = (game.player.is_mining and 
+                                        game.player.mining_target == (world_x, world_y))
+                        mining_progress = 0.0
+                        if is_being_mined and block.minable:
+                            mining_progress = 1.0 - (block.current_health / block.max_health)
+                        
+                        draw_block(screen_x, screen_y, block, is_being_mined, mining_progress)
         
         # Draw player
         player_screen_x, player_screen_y = game.camera.world_to_screen(game.player.world_x, game.player.world_y)

@@ -9,6 +9,10 @@ class Block:
         self.type = block_type
         self.walkable = self._get_walkable(block_type)
         self.color = self._get_color(block_type)
+        self.minable = self._get_minable(block_type)
+        self.mining_difficulty = self._get_mining_difficulty(block_type)
+        self.max_health = self.mining_difficulty
+        self.current_health = self.max_health
     
     def _get_walkable(self, block_type):
         walkable_blocks = {"grass", "dirt", "water"}
@@ -18,10 +22,48 @@ class Block:
         colors = {
             "grass": GREEN,
             "tree": LIGHT_BROWN,
+            "wood": LIGHT_BROWN,  # Wood blocks look like trees for now
             "dirt": DARK_BROWN,
             "water": BLUE
         }
         return colors.get(block_type, WHITE)
+
+    def _get_minable(self, block_type):
+        minable_blocks = {"tree"}
+        return block_type in minable_blocks
+
+    def _get_mining_difficulty(self, block_type):
+        # Mining difficulty in health points (higher = takes longer)
+        difficulties = {
+            "tree": 3.0,  # Takes 3 seconds with bare hands (1 damage/sec)
+        }
+        return difficulties.get(block_type, 1.0)
+
+    def reset_health(self):
+        """Reset block health to maximum (when mining is interrupted)"""
+        self.current_health = self.max_health
+
+    def take_damage(self, damage):
+        """Apply mining damage to the block. Returns True if block is destroyed."""
+        if not self.minable:
+            return False
+        
+        self.current_health -= damage
+        return self.current_health <= 0
+
+    def get_mining_result(self):
+        """Get the item(s) that should be added to inventory when this block is mined"""
+        mining_results = {
+            "tree": "wood",
+        }
+        return mining_results.get(self.type, None)
+
+    def get_replacement_block(self):
+        """Get the block type that should replace this block when mined"""
+        replacements = {
+            "tree": "dirt",
+        }
+        return replacements.get(self.type, self.type)
 
 
 class Game:
@@ -74,3 +116,20 @@ class Game:
         local_y = world_y % self.chunk_size
         
         return chunk.get((local_x, local_y))
+
+    def replace_block(self, world_x, world_y, new_block_type):
+        """Replace a block at the given coordinates with a new block type"""
+        chunk_x = world_x // self.chunk_size
+        chunk_y = world_y // self.chunk_size
+        
+        if (chunk_x, chunk_y) not in self.chunks:
+            return False
+        
+        chunk = self.chunks[(chunk_x, chunk_y)]
+        local_x = world_x % self.chunk_size
+        local_y = world_y % self.chunk_size
+        
+        if (local_x, local_y) in chunk:
+            chunk[(local_x, local_y)] = Block(new_block_type)
+            return True
+        return False

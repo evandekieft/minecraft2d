@@ -1,8 +1,8 @@
 # Window and grid configuration
-INVENTORY_HEIGHT = 80  # Height of inventory area at bottom
-GAME_HEIGHT = 600  # Height of game area
-WINDOW_SIZE = (800, GAME_HEIGHT + INVENTORY_HEIGHT)
-GRID_SIZE = 16  # Size of each grid cell in pixels
+INVENTORY_HEIGHT = 120  # Height of inventory area at bottom (scaled up)
+GAME_HEIGHT = 1200  # Height of game area
+WINDOW_SIZE = (1600, GAME_HEIGHT + INVENTORY_HEIGHT)
+GRID_SIZE = 64  # Size of each grid cell in pixels
 GRID_WIDTH = WINDOW_SIZE[0] // GRID_SIZE
 GRID_HEIGHT = GAME_HEIGHT // GRID_SIZE
 

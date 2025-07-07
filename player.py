@@ -1,18 +1,23 @@
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_SPACE
 from constants import BLUE
+from sprites import sprite_manager
 
 
 class Player:
     def __init__(self):
         self.world_x = 0
         self.world_y = 0
-        self.color = BLUE
+        self.color = BLUE  # Fallback color if sprites fail to load
         self.orientation = "north"  # north, south, east, west
         self.inventory = {}  # {block_type: count}
         self.active_slot = 0  # Index of active inventory slot (0-4)
         self.is_mining = False
         self.mining_target = None  # (x, y) coordinates of block being mined
         self.mining_damage_rate = 1.0  # Base mining rate (damage per second)
+        
+        # Sprites will be loaded after pygame display is initialized
+        self.sprites = {}
+        self.has_sprites = False
 
     def handle_keydown(self, key, game=None):
         if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
@@ -145,4 +150,17 @@ class Player:
         top_items = self.get_top_inventory_items()
         if 0 <= self.active_slot < len(top_items):
             return top_items[self.active_slot][0]
+        return None
+
+    def load_sprites_if_needed(self):
+        """Load sprites if not already loaded (after pygame display is initialized)"""
+        if not self.has_sprites:
+            self.sprites = sprite_manager.load_player_sprites()
+            self.has_sprites = len(self.sprites) == 4
+
+    def get_current_sprite(self):
+        """Get the sprite for the current orientation, or None if using fallback color"""
+        self.load_sprites_if_needed()
+        if self.has_sprites and self.orientation in self.sprites:
+            return self.sprites[self.orientation]
         return None

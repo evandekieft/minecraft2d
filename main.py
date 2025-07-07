@@ -75,31 +75,53 @@ def main():
                         
                         draw_block(screen_x, screen_y, block, is_being_mined, mining_progress)
         
+        # Draw targeting border around the block the player is facing
+        target_x, target_y = game.player.get_target_position()
+        target_screen_x, target_screen_y = game.camera.world_to_screen(target_x, target_y)
+        
+        # Only draw if target is on screen
+        if -GRID_SIZE < target_screen_x < WINDOW_SIZE[0] and -GRID_SIZE < target_screen_y < GAME_HEIGHT:
+            target_block = game.get_block(target_x, target_y)
+            if target_block:  # Only show border if there's actually a block there
+                # Draw a subtle border - light gray, thin line
+                border_rect = pygame.Rect(target_screen_x, target_screen_y, GRID_SIZE, GRID_SIZE)
+                pygame.draw.rect(screen, (200, 200, 200), border_rect, 2)
+        
         # Draw player
         player_screen_x, player_screen_y = game.camera.world_to_screen(game.player.world_x, game.player.world_y)
-        player_rect = pygame.Rect(
-            player_screen_x + 2,
-            player_screen_y + 2,
-            GRID_SIZE - 4,
-            GRID_SIZE - 4
-        )
-        pygame.draw.rect(screen, game.player.color, player_rect)
         
-        # Draw orientation indicator
-        center_x = player_screen_x + GRID_SIZE // 2
-        center_y = player_screen_y + GRID_SIZE // 2
-        arrow_length = 4
-        
-        if game.player.orientation == "north":
-            end_x, end_y = center_x, center_y - arrow_length
-        elif game.player.orientation == "south":
-            end_x, end_y = center_x, center_y + arrow_length
-        elif game.player.orientation == "east":
-            end_x, end_y = center_x + arrow_length, center_y
-        elif game.player.orientation == "west":
-            end_x, end_y = center_x - arrow_length, center_y
+        # Try to use sprite first, fall back to colored rectangle
+        player_sprite = game.player.get_current_sprite()
+        if player_sprite:
+            # Center the sprite in the grid cell
+            sprite_rect = player_sprite.get_rect()
+            sprite_rect.center = (player_screen_x + GRID_SIZE // 2, player_screen_y + GRID_SIZE // 2)
+            screen.blit(player_sprite, sprite_rect)
+        else:
+            # Fallback to colored rectangle with orientation arrow
+            player_rect = pygame.Rect(
+                player_screen_x + 2,
+                player_screen_y + 2,
+                GRID_SIZE - 4,
+                GRID_SIZE - 4
+            )
+            pygame.draw.rect(screen, game.player.color, player_rect)
             
-        pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
+            # Draw orientation indicator
+            center_x = player_screen_x + GRID_SIZE // 2
+            center_y = player_screen_y + GRID_SIZE // 2
+            arrow_length = 4
+            
+            if game.player.orientation == "north":
+                end_x, end_y = center_x, center_y - arrow_length
+            elif game.player.orientation == "south":
+                end_x, end_y = center_x, center_y + arrow_length
+            elif game.player.orientation == "east":
+                end_x, end_y = center_x + arrow_length, center_y
+            elif game.player.orientation == "west":
+                end_x, end_y = center_x - arrow_length, center_y
+                
+            pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
 
         # Draw inventory
         draw_inventory(screen, game.player)

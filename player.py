@@ -51,10 +51,11 @@ class Player:
             self.set_active_slot(4)
         
         # Handle movement/orientation change
-        if target_orientation and game:
+        if target_orientation:
             if self.orientation == target_orientation:
                 # Already facing this direction - move
-                self.move(dx, dy, game)
+                if game:
+                    self.move(dx, dy, game)
             else:
                 # Not facing this direction - just change orientation
                 self.orientation = target_orientation

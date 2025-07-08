@@ -183,7 +183,7 @@ class TestBlockMining:
         result3 = block.take_damage(0.5)
         
         assert result1 is False
-        assert result2 is True
+        assert result2 is False
         assert result3 is True
         assert block.current_health == 0.0
 

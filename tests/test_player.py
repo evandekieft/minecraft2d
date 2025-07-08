@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from pygame.locals import K_a, K_d, K_w, K_s
+from pygame.locals import K_a, K_d, K_w, K_s, K_UP
 from player import Player
 from world import Game, Block
 
@@ -61,13 +61,12 @@ class TestPlayer:
         assert player.world_x == 0
         assert player.world_y == 0
 
-    @pytest.mark.parametrize("orientation,expected_dx,expected_dy", [
-        ("north", 0, -1),
-        ("south", 0, 1),
-        ("east", 1, 0),
-        ("west", -1, 0),
-    ])
-    def test_movement_directions(self, orientation, expected_dx, expected_dy):
+    @pytest.mark.parametrize("key,orientation,expected_dx,expected_dy", [
+        (K_w,"north", 0, -1),
+        (K_s, "south", 0, 1),
+        (K_d, "east", 1, 0),
+        (K_a, "west", -1, 0),])
+    def test_movement_directions(self, key, orientation, expected_dx, expected_dy):
         player = Player()
         player.orientation = orientation
         mock_game = Mock()
@@ -75,7 +74,7 @@ class TestPlayer:
         mock_block.walkable = True
         mock_game.get_block.return_value = mock_block
         
-        player.handle_keydown(K_d, mock_game)
+        player.handle_keydown(key, mock_game)
         
         assert player.world_x == expected_dx
         assert player.world_y == expected_dy
@@ -95,7 +94,7 @@ class TestPlayer:
         
         # Move north
         player.orientation = "north"
-        player.handle_keyup(K_UP, mock_game)
+        player.handle_keydown(K_w, mock_game)
         assert player.world_x == 1
         assert player.world_y == -1
 

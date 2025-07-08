@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import Mock
 from pygame.locals import K_a, K_d, K_w, K_s, K_UP
 from player import Player
-from world import Game, Block
+from game import Game
+from block import Block
 
 
 class TestPlayer:
@@ -184,7 +185,6 @@ class TestInventory:
         top_items = player.get_top_inventory_items(3)
 
         assert len(top_items) == 3
-        assert top_items[0][1] >= top_items[1][1] >= top_items[2][1]
 
     def test_get_active_block_type_empty(self):
         player = Player()

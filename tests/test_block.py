@@ -1,5 +1,5 @@
 import pytest
-from world import Block
+from block import Block
 from constants import (
     GREEN,
     LIGHT_BROWN,

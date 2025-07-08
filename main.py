@@ -1,8 +1,9 @@
 import pygame
 import sys
-from pygame.locals import QUIT, KEYDOWN, KEYUP
+from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE
 from constants import WINDOW_SIZE, GRID_SIZE, BLACK, WHITE, GAME_HEIGHT, INVENTORY_HEIGHT
-from world import Game
+from menu import MenuSystem
+from world_manager import WorldManager
 
 # Initialize PyGame
 pygame.init()
@@ -44,102 +45,182 @@ def draw_block(screen_x, screen_y, block, is_being_mined=False, mining_progress=
 
 
 def main():
-    game = Game()
     clock = pygame.time.Clock()
+    menu_system = MenuSystem(screen)
+    world_manager = WorldManager()
+    
+    # Game state
+    game = None
+    game_state = "menu"  # "menu" or "playing" or "paused"
+    current_world_name = None
     
     while True:
-        dt = clock.tick(60) / 1000.0  # Convert to seconds
+        dt = clock.tick(60) / 1000.0
         
         # Event handling
         for event in pygame.event.get():
             if event.type == QUIT:
+                # Save before quitting if in game
+                if game and current_world_name and game_state == "playing":
+                    world_manager.save_world(game, current_world_name)
                 pygame.quit()
                 sys.exit()
+            
             elif event.type == KEYDOWN:
-                game.player.handle_keydown(event.key, game)
-            elif event.type == KEYUP:
-                game.player.handle_keyup(event.key, game)
-
-        # Update game state
-        game.player.update(dt, game)
-        game.camera.update(game.player.world_x, game.player.world_y, dt)
-        game._generate_chunks_around_player()  # Generate new chunks as needed
-
-        # Drawing
-        screen.fill(BLACK)
-        
-        # Draw world - only visible blocks
-        left, right, top, bottom = game.camera.get_visible_bounds()
-        
-        for world_y in range(top, bottom + 1):
-            for world_x in range(left, right + 1):
-                screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
-                # Only draw if on screen (within game area)
-                if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
-                    block = game.get_block(world_x, world_y)
-                    if block:
-                        # Check if this block is being mined
-                        is_being_mined = (game.player.is_mining and 
-                                        game.player.mining_target == (world_x, world_y))
-                        mining_progress = 0.0
-                        if is_being_mined and block.minable:
-                            mining_progress = 1.0 - (block.current_health / block.max_health)
-                        
-                        draw_block(screen_x, screen_y, block, is_being_mined, mining_progress)
-        
-        # Draw targeting border around the block the player is facing
-        target_x, target_y = game.player.get_target_position()
-        target_screen_x, target_screen_y = game.camera.world_to_screen(target_x, target_y)
-        
-        # Only draw if target is on screen
-        if -GRID_SIZE < target_screen_x < WINDOW_SIZE[0] and -GRID_SIZE < target_screen_y < GAME_HEIGHT:
-            target_block = game.get_block(target_x, target_y)
-            if target_block:  # Only show border if there's actually a block there
-                # Draw a subtle border - light gray, thin line
-                border_rect = pygame.Rect(target_screen_x, target_screen_y, GRID_SIZE, GRID_SIZE)
-                pygame.draw.rect(screen, (200, 200, 200), border_rect, 2)
-        
-        # Draw player
-        player_screen_x, player_screen_y = game.camera.world_to_screen(game.player.world_x, game.player.world_y)
-        
-        # Try to use sprite first, fall back to colored rectangle
-        player_sprite = game.player.get_current_sprite()
-        if player_sprite:
-            # Center the sprite in the grid cell
-            sprite_rect = player_sprite.get_rect()
-            sprite_rect.center = (player_screen_x + GRID_SIZE // 2, player_screen_y + GRID_SIZE // 2)
-            screen.blit(player_sprite, sprite_rect)
-        else:
-            # Fallback to colored rectangle with orientation arrow
-            player_rect = pygame.Rect(
-                player_screen_x + 2,
-                player_screen_y + 2,
-                GRID_SIZE - 4,
-                GRID_SIZE - 4
-            )
-            pygame.draw.rect(screen, game.player.color, player_rect)
-            
-            # Draw orientation indicator
-            center_x = player_screen_x + GRID_SIZE // 2
-            center_y = player_screen_y + GRID_SIZE // 2
-            arrow_length = 4
-            
-            if game.player.orientation == "north":
-                end_x, end_y = center_x, center_y - arrow_length
-            elif game.player.orientation == "south":
-                end_x, end_y = center_x, center_y + arrow_length
-            elif game.player.orientation == "east":
-                end_x, end_y = center_x + arrow_length, center_y
-            elif game.player.orientation == "west":
-                end_x, end_y = center_x - arrow_length, center_y
+                if game_state == "menu":
+                    # Handle menu input
+                    action = menu_system.handle_event(event)
+                    if action == "quit":
+                        pygame.quit()
+                        sys.exit()
+                    elif isinstance(action, tuple):
+                        action_type, data = action
+                        if action_type == "load_world":
+                            # Load existing world
+                            game = world_manager.load_world(data)
+                            if game:
+                                current_world_name = data
+                                game_state = "playing"
+                                menu_system.reset_to_main_menu()
+                        elif action_type == "create_world":
+                            # Create new world
+                            game = world_manager.create_new_world(data)
+                            if game:
+                                current_world_name = data
+                                game_state = "playing"
+                                menu_system.reset_to_main_menu()
                 
-            pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
-
-        # Draw inventory
-        draw_inventory(screen, game.player)
-
+                elif game_state == "playing":
+                    if event.key == K_ESCAPE:
+                        # Show pause menu
+                        menu_system.show_pause_menu()
+                        game_state = "paused"
+                    else:
+                        # Handle game input
+                        game.player.handle_keydown(event.key, game)
+                
+                elif game_state == "paused":
+                    action = menu_system.handle_event(event)
+                    if action == "resume":
+                        game_state = "playing"
+                    elif action == "save_and_exit":
+                        # Save and return to main menu
+                        if current_world_name:
+                            world_manager.save_world(game, current_world_name)
+                        game = None
+                        current_world_name = None
+                        game_state = "menu"
+                        menu_system.reset_to_main_menu()
+                    elif action == "exit_no_save":
+                        # Return to main menu without saving
+                        game = None
+                        current_world_name = None
+                        game_state = "menu"
+                        menu_system.reset_to_main_menu()
+            
+            elif event.type == KEYUP and game_state == "playing" and game:
+                game.player.handle_keyup(event.key, game)
+        
+        # Update and draw based on current state
+        if game_state == "menu":
+            menu_system.draw()
+        
+        elif game_state == "playing" and game:
+            # Update game state
+            game.player.update(dt, game)
+            game.camera.update(game.player.world_x, game.player.world_y, dt)
+            game._generate_chunks_around_player()
+            
+            # Update day cycle if present
+            if hasattr(game, 'update_day_cycle'):
+                game.update_day_cycle(dt)
+            
+            # Draw game
+            draw_game(screen, game)
+        
+        elif game_state == "paused":
+            # Draw game in background (frozen)
+            if game:
+                draw_game(screen, game)
+            # Draw pause menu on top
+            menu_system.draw()
+        
         pygame.display.flip()
-        clock.tick(60)
+
+
+def draw_game(screen, game):
+    """Draw the game world"""
+    screen.fill(BLACK)
+    
+    # Draw world - only visible blocks
+    left, right, top, bottom = game.camera.get_visible_bounds()
+    
+    for world_y in range(top, bottom + 1):
+        for world_x in range(left, right + 1):
+            screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
+            # Only draw if on screen (within game area)
+            if -GRID_SIZE < screen_x < WINDOW_SIZE[0] and -GRID_SIZE < screen_y < GAME_HEIGHT:
+                block = game.get_block(world_x, world_y)
+                if block:
+                    # Check if this block is being mined
+                    is_being_mined = (game.player.is_mining and 
+                                    game.player.mining_target == (world_x, world_y))
+                    mining_progress = 0.0
+                    if is_being_mined and block.minable:
+                        mining_progress = 1.0 - (block.current_health / block.max_health)
+                    
+                    draw_block(screen_x, screen_y, block, is_being_mined, mining_progress)
+    
+    # Draw targeting border around the block the player is facing
+    target_x, target_y = game.player.get_target_position()
+    target_screen_x, target_screen_y = game.camera.world_to_screen(target_x, target_y)
+    
+    # Only draw if target is on screen
+    if -GRID_SIZE < target_screen_x < WINDOW_SIZE[0] and -GRID_SIZE < target_screen_y < GAME_HEIGHT:
+        target_block = game.get_block(target_x, target_y)
+        if target_block:  # Only show border if there's actually a block there
+            # Draw a subtle border - light gray, thin line
+            border_rect = pygame.Rect(target_screen_x, target_screen_y, GRID_SIZE, GRID_SIZE)
+            pygame.draw.rect(screen, (200, 200, 200), border_rect, 2)
+    
+    # Draw player
+    player_screen_x, player_screen_y = game.camera.world_to_screen(game.player.world_x, game.player.world_y)
+    
+    # Try to use sprite first, fall back to colored rectangle
+    player_sprite = game.player.get_current_sprite()
+    if player_sprite:
+        # Center the sprite in the grid cell
+        sprite_rect = player_sprite.get_rect()
+        sprite_rect.center = (player_screen_x + GRID_SIZE // 2, player_screen_y + GRID_SIZE // 2)
+        screen.blit(player_sprite, sprite_rect)
+    else:
+        # Fallback to colored rectangle with orientation arrow
+        player_rect = pygame.Rect(
+            player_screen_x + 2,
+            player_screen_y + 2,
+            GRID_SIZE - 4,
+            GRID_SIZE - 4
+        )
+        pygame.draw.rect(screen, game.player.color, player_rect)
+        
+        # Draw orientation indicator
+        center_x = player_screen_x + GRID_SIZE // 2
+        center_y = player_screen_y + GRID_SIZE // 2
+        arrow_length = 4
+        
+        if game.player.orientation == "north":
+            end_x, end_y = center_x, center_y - arrow_length
+        elif game.player.orientation == "south":
+            end_x, end_y = center_x, center_y + arrow_length
+        elif game.player.orientation == "east":
+            end_x, end_y = center_x + arrow_length, center_y
+        elif game.player.orientation == "west":
+            end_x, end_y = center_x - arrow_length, center_y
+            
+        pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
+
+    # Draw inventory
+    draw_inventory(screen, game.player)
 
 
 def draw_inventory(screen, player):

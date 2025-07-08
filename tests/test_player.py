@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN
+from pygame.locals import K_a, K_d, K_w, K_s
 from player import Player
 from world import Game, Block
 
@@ -13,10 +13,10 @@ class TestPlayer:
         assert player.orientation == "north"
 
     @pytest.mark.parametrize("key,expected_orientation", [
-        (K_LEFT, "west"),
-        (K_RIGHT, "east"),
-        (K_UP, "north"),
-        (K_DOWN, "south"),
+        (K_a, "west"),
+        (K_d, "east"),
+        (K_w, "north"),
+        (K_s, "south"),
     ])
     def test_orientation_updates(self, key, expected_orientation):
         player = Player()
@@ -31,7 +31,7 @@ class TestPlayer:
         mock_game.get_block.return_value = mock_block
         
         player.orientation = "east"
-        player.handle_keyup(K_RIGHT, mock_game)
+        player.handle_keydown(K_d, mock_game)
         
         assert player.world_x == 1
         assert player.world_y == 0
@@ -45,7 +45,7 @@ class TestPlayer:
         mock_game.get_block.return_value = mock_block
         
         player.orientation = "east"
-        player.handle_keyup(K_RIGHT, mock_game)
+        player.handle_keydown(K_d, mock_game)
         
         assert player.world_x == 0
         assert player.world_y == 0
@@ -56,7 +56,7 @@ class TestPlayer:
         mock_game.get_block.return_value = None
         
         player.orientation = "east"
-        player.handle_keyup(K_RIGHT, mock_game)
+        player.handle_keydown(K_d, mock_game)
         
         assert player.world_x == 0
         assert player.world_y == 0
@@ -75,7 +75,7 @@ class TestPlayer:
         mock_block.walkable = True
         mock_game.get_block.return_value = mock_block
         
-        player.handle_keyup(K_RIGHT, mock_game)
+        player.handle_keydown(K_d, mock_game)
         
         assert player.world_x == expected_dx
         assert player.world_y == expected_dy
@@ -89,7 +89,7 @@ class TestPlayer:
         
         # Move east
         player.orientation = "east"
-        player.handle_keyup(K_RIGHT, mock_game)
+        player.handle_keydown(K_d, mock_game)
         assert player.world_x == 1
         assert player.world_y == 0
         

@@ -14,31 +14,28 @@ class Player:
         self.is_mining = False
         self.mining_target = None  # (x, y) coordinates of block being mined
         self.mining_damage_rate = 1.0  # Base mining rate (damage per second)
-        
+        self.just_finished_mining = False  # Prevent immediate block placement after mining
+
         # Sprites will be loaded after pygame display is initialized
         self.sprites = {}
         self.has_sprites = False
 
     def handle_keydown(self, key, game=None):
+        target_orientation = None
         dx, dy = 0, 0
-        moved = False
         
         if key == K_a:
-            self.orientation = "west"
+            target_orientation = "west"
             dx = -1
-            moved = True
         elif key == K_d:
-            self.orientation = "east"
+            target_orientation = "east"
             dx = 1
-            moved = True
         elif key == K_w:
-            self.orientation = "north"
+            target_orientation = "north"
             dy = -1
-            moved = True
         elif key == K_s:
-            self.orientation = "south"
+            target_orientation = "south"
             dy = 1
-            moved = True
         elif key == K_SPACE and game:
             self.start_mining(game)
             return
@@ -52,13 +49,24 @@ class Player:
             self.set_active_slot(3)
         elif key == K_5:
             self.set_active_slot(4)
-            
-        if moved and game:
-            self.move(dx, dy, game)
+        
+        # Handle movement/orientation change
+        if target_orientation and game:
+            if self.orientation == target_orientation:
+                # Already facing this direction - move
+                self.move(dx, dy, game)
+            else:
+                # Not facing this direction - just change orientation
+                self.orientation = target_orientation
 
     def handle_keyup(self, key, game):
         if key == K_SPACE:
-            self.stop_mining(game)
+            if self.is_mining:
+                self.stop_mining(game)
+            elif not self.just_finished_mining:
+                self.place_block(game)
+            # Reset the flag after handling
+            self.just_finished_mining = False
 
     def update(self, dt, game=None):
         # Handle continuous mining
@@ -143,9 +151,10 @@ class Player:
         replacement_type = target_block.get_replacement_block()
         game.replace_block(target_x, target_y, replacement_type)
         
-        # Stop mining
+        # Stop mining and set flag to prevent immediate placement
         self.is_mining = False
         self.mining_target = None
+        self.just_finished_mining = True
 
     def add_to_inventory(self, block_type):
         if block_type in self.inventory:
@@ -180,3 +189,22 @@ class Player:
 
     def set_active_slot(self, slot):
         self.active_slot = slot
+
+    def place_block(self, game):
+        """Place a block at the target position and remove it from inventory"""
+        target_x, target_y = self.get_target_position()
+        block_type = self.get_active_block_type()
+        target_block = game.get_block(target_x, target_y)
+        
+        if block_type and target_block and target_block.walkable:
+            # Check if we have the block in inventory
+            if block_type in self.inventory and self.inventory[block_type] > 0:
+                # Place the block
+                game.replace_block(target_x, target_y, block_type)
+                # Remove one from inventory
+                self.inventory[block_type] -= 1
+                # Remove the block type entirely if count reaches 0
+                if self.inventory[block_type] == 0:
+                    del self.inventory[block_type]
+
+    

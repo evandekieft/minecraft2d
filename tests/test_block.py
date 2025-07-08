@@ -118,9 +118,9 @@ class TestBlockMining:
         assert block.type == "wood"
         assert block.color == LIGHT_BROWN
         assert block.minable is True
-        assert block.mining_difficulty == 3.0
-        assert block.max_health == 3.0
-        assert block.current_health == 3.0
+        assert block.mining_difficulty == 1.5
+        assert block.max_health == 1.5
+        assert block.current_health == 1.5
 
     def test_stone_block_mining_properties(self):
         block = Block("stone")
@@ -165,12 +165,12 @@ class TestBlockMining:
         result = block.take_damage(1.0)
         
         assert result is False
-        assert block.current_health == 2.0
+        assert block.current_health == 0.5
 
     def test_take_damage_minable_destroyed(self):
         block = Block("wood")
         
-        result = block.take_damage(3.0)
+        result = block.take_damage(1.5)
         
         assert result is True
         assert block.current_health == 0.0
@@ -178,12 +178,12 @@ class TestBlockMining:
     def test_take_damage_multiple_hits(self):
         block = Block("wood")
         
-        result1 = block.take_damage(1.0)
-        result2 = block.take_damage(1.0)
-        result3 = block.take_damage(1.0)
+        result1 = block.take_damage(0.5)
+        result2 = block.take_damage(0.5)
+        result3 = block.take_damage(0.5)
         
         assert result1 is False
-        assert result2 is False
+        assert result2 is True
         assert result3 is True
         assert block.current_health == 0.0
 

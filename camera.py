@@ -12,7 +12,8 @@ class Camera:
         target_camera_x = target_x
         target_camera_y = target_y
 
-        # Smooth interpolation toward target (dt is available but not needed for frame-rate independent smoothing)
+        # Smooth interpolation toward target (dt is available
+        # but not needed for frame-rate independent smoothing)
         self.x += (target_camera_x - self.x) * self.smoothing
         self.y += (target_camera_y - self.y) * self.smoothing
 

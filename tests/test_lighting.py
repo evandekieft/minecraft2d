@@ -2,16 +2,12 @@
 """
 Quick test script to verify lighting system functionality
 """
-import pygame
 from lighting import LightingSystem, LightSource
 
 
 def test_lighting_system():
     """Test that lighting system methods work correctly"""
     # Initialize pygame (needed for surfaces)
-    pygame.init()
-    pygame.display.set_mode((800, 600))
-
     lighting = LightingSystem()
 
     # Test initial state
@@ -44,9 +40,3 @@ def test_lighting_system():
     # Test surface creation
     lighting._create_darkness_surface()
     assert lighting.darkness_surface is not None
-
-    print("✓ All lighting system tests passed!")
-
-
-if __name__ == "__main__":
-    test_lighting_system()

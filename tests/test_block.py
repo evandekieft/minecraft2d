@@ -1,7 +1,8 @@
 import pytest
 import pygame
 from unittest.mock import Mock, patch
-from block import Block
+from block import Block 
+from player import Player
 from constants import (
     GREEN,
     LIGHT_BROWN,
@@ -435,3 +436,25 @@ class TestBlockDrawing:
             # Check that the block is drawn with the correct color
             args = mock_draw_rect.call_args[0]
             assert args[1] == expected_color
+
+    def test_place_block_success(self):
+        player = Player()
+        player.world_x = 5
+        player.world_y = 10
+        player.orientation = "north"
+        player.inventory = {"dirt": 2}
+        player.active_slot = 0
+
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.walkable = True
+        mock_game.get_block.return_value = mock_block
+
+        # Patch get_top_inventory_items to return the correct block type in slot 0
+        player.get_top_inventory_items = lambda count=5: [("dirt", 2)]
+
+        player.place_block(mock_game)
+
+        # Target position should be (5, 9) for north
+        mock_game.replace_block.assert_called_once_with(5, 9, "dirt")
+        assert player.inventory["dirt"] == 1

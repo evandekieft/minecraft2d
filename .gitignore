@@ -1,6 +1,9 @@
 # VS Code settings
 .vscode/
 
+# from running tests with coverage
+.coverage 
+
 # game saves
 saves
 

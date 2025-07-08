@@ -373,3 +373,12 @@ class Game:
         text_x = indicator_x - text_surface.get_width() // 2
         text_y = indicator_y + indicator_size + 8
         screen.blit(text_surface, (text_x, text_y))
+
+    def update_state(self, dt):
+        """Update game state every time tick (dt)"""
+        self.player.update(dt, self)
+        self.camera.update(self.player.world_x, self.player.world_y, dt)
+        self._generate_chunks_around_player()
+
+        # Update day cycle
+        self.update_day_cycle(dt)

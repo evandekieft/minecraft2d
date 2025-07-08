@@ -96,18 +96,7 @@ def main():
             menu_system.draw()
 
         elif game_state == "playing" and game:
-            # Update game state
-            game.player.update(dt, game)
-            game.camera.update(game.player.world_x, game.player.world_y, dt)
-            game._generate_chunks_around_player()
-
-            # Update lighting system
-            # lighting_system.update_player_light(game.player)  # Disabled - player no longer has light
-
-            # Update day cycle
-            game.update_day_cycle(dt)
-
-            # Draw game
+            game.update_state(dt)
             game.draw(screen)
 
         elif game_state == "paused":

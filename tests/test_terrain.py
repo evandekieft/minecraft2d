@@ -1,8 +1,5 @@
 import random
 from game import Game
-from block import Block
-from terrain import TerrainGenerator
-
 
 
 class TestNoiseGeneration:
@@ -69,4 +66,3 @@ class TestNoiseGeneration:
             for y in range(20):
                 block = game.get_block(x, y)
                 assert block.type in valid_types, f"Invalid block type: {block.type}"
-

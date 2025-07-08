@@ -1,6 +1,6 @@
 import pygame
 import sys
-from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, K_LEFTBRACKET, K_RIGHTBRACKET
+from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE
 from constants import (
     WINDOW_SIZE,
     GRID_SIZE,
@@ -105,12 +105,6 @@ def main():
                         # Show pause menu
                         menu_system.show_pause_menu()
                         game_state = "paused"
-                    elif event.key == K_LEFTBRACKET:
-                        # Decrease darkness (more light)
-                        lighting_system.adjust_darkness(-20)
-                    elif event.key == K_RIGHTBRACKET:
-                        # Increase darkness (less light)
-                        lighting_system.adjust_darkness(20)
                     else:
                         # Handle game input
                         game.player.handle_keydown(event.key, game)
@@ -150,9 +144,8 @@ def main():
             # Update lighting system
             # lighting_system.update_player_light(game.player)  # Disabled - player no longer has light
 
-            # Update day cycle if present
-            if hasattr(game, "update_day_cycle"):
-                game.update_day_cycle(dt)
+            # Update day cycle
+            game.update_day_cycle(dt)
 
             # Draw game
             draw_game(screen, game)
@@ -258,16 +251,17 @@ def draw_game(screen, game):
         pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
 
     # Draw inventory (UI should be on top of lighting)
-    draw_inventory(screen, game.player)
+    draw_inventory(screen, game)
 
 
-def draw_inventory(screen, player):
+def draw_inventory(screen, game):
+
     # Draw black inventory background
     inventory_rect = pygame.Rect(0, GAME_HEIGHT, WINDOW_SIZE[0], INVENTORY_HEIGHT)
     pygame.draw.rect(screen, BLACK, inventory_rect)
 
     # Get top 5 inventory items
-    top_items = player.get_top_inventory_items(5)
+    top_items = game.player.get_top_inventory_items(5)
 
     # Calculate slot dimensions and positions
     slot_size = 50
@@ -286,8 +280,8 @@ def draw_inventory(screen, player):
         pygame.draw.rect(screen, (64, 64, 64), slot_rect)  # Dark gray
 
         # Draw border (highlight active slot)
-        border_color = WHITE if i == player.active_slot else (128, 128, 128)
-        border_width = 3 if i == player.active_slot else 1
+        border_color = WHITE if i == game.player.active_slot else (128, 128, 128)
+        border_width = 3 if i == game.player.active_slot else 1
         pygame.draw.rect(screen, border_color, slot_rect, border_width)
 
         # Draw block if available
@@ -312,13 +306,72 @@ def draw_inventory(screen, player):
             text_y = slot_y + slot_size - 20
             screen.blit(count_text, (text_x, text_y))
 
-    # Draw lighting level indicator
-    font_small = pygame.font.Font(None, 24)
-    darkness_pct = lighting_system.get_darkness_percentage()
-    lighting_text = font_small.render(
-        f"Lighting: {100-darkness_pct}% ([ ] to adjust)", True, WHITE
+    # Draw day/night indicator with sun/moon visual
+    draw_day_night_indicator(screen, game)
+
+
+def draw_day_night_indicator(screen, game):
+    """Draw a visual day/night indicator with sun/moon"""
+    import math
+    
+    # Position for the indicator (right side of inventory area, vertically centered)
+    indicator_x = WINDOW_SIZE[0] - 120
+    indicator_y = GAME_HEIGHT + (INVENTORY_HEIGHT // 2)
+    indicator_size = 25
+    
+    # Colors
+    sun_color = (255, 255, 0)  # Yellow
+    moon_color = (220, 220, 220)  # Light gray
+    night_sky_color = (20, 20, 40)  # Dark blue
+    day_sky_color = (135, 206, 235)  # Sky blue
+    
+    # Calculate background color based on time of day
+    sky_blend = game.light_level
+    bg_color = (
+        int(night_sky_color[0] * (1 - sky_blend) + day_sky_color[0] * sky_blend),
+        int(night_sky_color[1] * (1 - sky_blend) + day_sky_color[1] * sky_blend),
+        int(night_sky_color[2] * (1 - sky_blend) + day_sky_color[2] * sky_blend)
     )
-    screen.blit(lighting_text, (10, GAME_HEIGHT + INVENTORY_HEIGHT - 30))
+    
+    # Draw background circle
+    pygame.draw.circle(screen, bg_color, (indicator_x, indicator_y), indicator_size)
+    pygame.draw.circle(screen, WHITE, (indicator_x, indicator_y), indicator_size, 2)
+    
+    # Draw sun or moon centered in the circle
+    if game.is_daytime():
+        # Draw sun centered in the circle
+        sun_radius = 8
+        pygame.draw.circle(screen, sun_color, (indicator_x, indicator_y), sun_radius)
+        
+        # Draw sun rays
+        for i in range(8):
+            ray_angle = i * math.pi / 4
+            ray_length = 12
+            ray_start_x = indicator_x + int((sun_radius + 2) * math.cos(ray_angle))
+            ray_start_y = indicator_y + int((sun_radius + 2) * math.sin(ray_angle))
+            ray_end_x = indicator_x + int((sun_radius + ray_length) * math.cos(ray_angle))
+            ray_end_y = indicator_y + int((sun_radius + ray_length) * math.sin(ray_angle))
+            pygame.draw.line(screen, sun_color, (ray_start_x, ray_start_y), (ray_end_x, ray_end_y), 2)
+    else:
+        # Draw moon centered in the circle
+        moon_radius = 8
+        pygame.draw.circle(screen, moon_color, (indicator_x, indicator_y), moon_radius)
+        
+        # Draw moon craters (simple circles)
+        crater_color = (180, 180, 180)
+        pygame.draw.circle(screen, crater_color, (indicator_x - 2, indicator_y - 2), 2)
+        pygame.draw.circle(screen, crater_color, (indicator_x + 3, indicator_y + 1), 1)
+        pygame.draw.circle(screen, crater_color, (indicator_x - 1, indicator_y + 3), 1)
+    
+    # Draw time text below the indicator
+    font_small = pygame.font.Font(None, 18)
+    time_text = game.get_time_of_day_string()
+    light_pct = int(game.light_level * 100)
+    display_text = f"{time_text} ({light_pct}%)"
+    text_surface = font_small.render(display_text, True, WHITE)
+    text_x = indicator_x - text_surface.get_width() // 2
+    text_y = indicator_y + indicator_size + 8
+    screen.blit(text_surface, (text_x, text_y))
 
 
 if __name__ == "__main__":

@@ -288,8 +288,61 @@ class Game:
         # Initialize terrain generator
         self.terrain_generator = TerrainGenerator(seed=terrain_seed)
 
+        # Day/night cycle settings
+        self.day_duration = 120.0  # 2 minutes for day (in seconds)
+        self.night_duration = 120.0  # 2 minutes for night (in seconds)
+        self.cycle_duration = self.day_duration + self.night_duration  # Total cycle: 4 minutes
+        
+        # Time tracking (starts at noon - full daylight)
+        self.time_elapsed = 0.0  # Time elapsed in current cycle
+        self.current_time_of_day = 0.0  # 0.0 = noon, 0.5 = midnight, 1.0 = noon again
+        
+        # Light level (0.0 = pitch black, 1.0 = full daylight)
+        self.light_level = 1.0  # Start at full daylight (noon)
+
         # Generate initial chunks around player
         self._generate_chunks_around_player()
+    
+    def update_day_cycle(self, dt):
+        """Update the day/night cycle and lighting"""
+        import math
+        from lighting import lighting_system
+        
+        # Update time
+        self.time_elapsed += dt
+        
+        # Calculate current time of day (0.0 = noon, 0.5 = midnight, 1.0 = noon again)
+        self.current_time_of_day = (self.time_elapsed / self.cycle_duration) % 1.0
+        
+        # Calculate light level using smooth sine wave
+        # At 0.0 (noon): light_level = 1.0 (full daylight)
+        # At 0.5 (midnight): light_level = 0.0 (pitch black)
+        # Smooth transition between day and night
+        self.light_level = (math.cos(self.current_time_of_day * 2 * math.pi) + 1) / 2
+        
+        # Convert light level to darkness alpha (0-220)
+        # light_level 1.0 -> darkness_alpha 0 (full light)
+        # light_level 0.0 -> darkness_alpha 220 (very dark)
+        max_darkness = 220
+        darkness_alpha = int(max_darkness * (1.0 - self.light_level))
+        
+        # Update lighting system
+        lighting_system.set_darkness_level(darkness_alpha)
+    
+    def get_time_of_day_string(self):
+        """Get a readable string representing the current time of day"""
+        if 0.0 <= self.current_time_of_day < 0.25:
+            return "Afternoon"
+        elif 0.25 <= self.current_time_of_day < 0.5:
+            return "Evening"
+        elif 0.5 <= self.current_time_of_day < 0.75:
+            return "Night"
+        else:
+            return "Dawn"
+    
+    def is_daytime(self):
+        """Check if it's currently daytime (light level > 0.5)"""
+        return self.light_level > 0.5
 
     def _generate_chunks_around_player(self):
         # Generate chunks in a 5x5 area around player to prevent black borders

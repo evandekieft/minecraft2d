@@ -1,4 +1,4 @@
-from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN, K_SPACE
+from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE
 from constants import BLUE
 from sprites import sprite_manager
 
@@ -20,20 +20,20 @@ class Player:
         self.has_sprites = False
 
     def handle_keydown(self, key, game=None):
-        if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
-            if key == K_LEFT:
+        if key in (K_a, K_d, K_w, K_s):
+            if key == K_a:
                 self.orientation = "west"
-            elif key == K_RIGHT:
+            elif key == K_d:
                 self.orientation = "east"
-            elif key == K_UP:
+            elif key == K_w:
                 self.orientation = "north"
-            elif key == K_DOWN:
+            elif key == K_s:
                 self.orientation = "south"
         elif key == K_SPACE and game:
             self.start_mining(game)
 
     def handle_keyup(self, key, game):
-        if key in (K_LEFT, K_RIGHT, K_UP, K_DOWN):
+        if key in (K_a, K_d, K_w, K_s):
             dx, dy = 0, 0
             if self.orientation == "west":
                 dx = -1

@@ -166,9 +166,9 @@ class Player:
             self.inventory[block_type] = 1
 
     def get_top_inventory_items(self, count=5):
-        # Get top N items by count
-        sorted_items = sorted(self.inventory.items(), key=lambda x: x[1], reverse=True)
-        return sorted_items[:count]
+        # Get items in stable order (insertion order)
+        items = list(self.inventory.items())
+        return items[:count]
 
     def get_active_block_type(self):
         # Get the block type in the active slot

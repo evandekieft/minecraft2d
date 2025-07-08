@@ -1,9 +1,10 @@
 import pygame
 import sys
-from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE
+from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, K_LEFTBRACKET, K_RIGHTBRACKET
 from constants import WINDOW_SIZE, GRID_SIZE, BLACK, WHITE, GAME_HEIGHT, INVENTORY_HEIGHT
 from menu import MenuSystem
 from world_manager import WorldManager
+from lighting import lighting_system
 
 # Initialize PyGame
 pygame.init()
@@ -95,6 +96,12 @@ def main():
                         # Show pause menu
                         menu_system.show_pause_menu()
                         game_state = "paused"
+                    elif event.key == K_LEFTBRACKET:
+                        # Decrease darkness (more light)
+                        lighting_system.adjust_darkness(-20)
+                    elif event.key == K_RIGHTBRACKET:
+                        # Increase darkness (less light)
+                        lighting_system.adjust_darkness(20)
                     else:
                         # Handle game input
                         game.player.handle_keydown(event.key, game)
@@ -130,6 +137,9 @@ def main():
             game.player.update(dt, game)
             game.camera.update(game.player.world_x, game.player.world_y, dt)
             game._generate_chunks_around_player()
+            
+            # Update lighting system
+            lighting_system.update_player_light(game.player)
             
             # Update day cycle if present
             if hasattr(game, 'update_day_cycle'):
@@ -219,7 +229,10 @@ def draw_game(screen, game):
             
         pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
 
-    # Draw inventory
+    # Apply lighting effect
+    lighting_system.apply_lighting(screen, game.camera)
+    
+    # Draw inventory (UI should be on top of lighting)
     draw_inventory(screen, game.player)
 
 
@@ -270,6 +283,12 @@ def draw_inventory(screen, player):
             text_x = slot_x + slot_size // 2 - count_text.get_width() // 2
             text_y = slot_y + slot_size - 20
             screen.blit(count_text, (text_x, text_y))
+    
+    # Draw lighting level indicator
+    font_small = pygame.font.Font(None, 24)
+    darkness_pct = lighting_system.get_darkness_percentage()
+    lighting_text = font_small.render(f"Lighting: {100-darkness_pct}% ([ ] to adjust)", True, WHITE)
+    screen.blit(lighting_text, (10, GAME_HEIGHT + INVENTORY_HEIGHT - 30))
 
 if __name__ == "__main__":
     main()

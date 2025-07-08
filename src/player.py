@@ -22,7 +22,7 @@ class Player:
         # Sprites will be loaded after pygame display is initialized
         self.sprites = {}
         self.has_sprites = False
-        
+
         # Movement system
         self.movement_speed = 6.0  # blocks per second
         self.pressed_keys = set()  # Track currently pressed keys
@@ -43,7 +43,7 @@ class Player:
                 target_orientation = "north"
             elif key == K_s:
                 target_orientation = "south"
-            
+
             if target_orientation and self.orientation != target_orientation:
                 self.orientation = target_orientation
                 # Reset movement timing when changing orientation
@@ -78,24 +78,24 @@ class Player:
         # Handle continuous movement
         if self.pressed_keys and game:
             self.process_movement(dt, game)
-            
+
         # Handle continuous mining
         if self.is_mining and game and self.mining_target:
             self.process_mining(dt, game)
-            
+
     def process_movement(self, dt, game):
         """Process continuous movement based on held keys"""
         # Accumulate time
         self.movement_timer += dt
-        
+
         # Check if enough time has passed since last move
         if self.movement_timer < self.move_interval:
             return
-            
+
         # Determine movement direction based on pressed keys
         dx, dy = 0, 0
         target_orientation = None
-        
+
         # Priority: most recent key press determines direction
         # Check keys in order of typical priority
         if K_w in self.pressed_keys:
@@ -110,7 +110,7 @@ class Player:
         elif K_d in self.pressed_keys:
             target_orientation = "east"
             dx = 1
-            
+
         # Move if we have a direction and are facing the right way
         if target_orientation and self.orientation == target_orientation:
             if self.move(dx, dy, game):

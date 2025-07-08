@@ -87,11 +87,13 @@ class Block:
             "diamond": "dirt",  # Diamond becomes dirt when mined
         }
         return replacements.get(self.type, self.type)
-    
-    def draw(self, screen, screen_x, screen_y, is_being_mined=False, mining_progress=0.0):
+
+    def draw(
+        self, screen, screen_x, screen_y, is_being_mined=False, mining_progress=0.0
+    ):
         """Draw the block at the given screen coordinates"""
         rect = pygame.Rect(screen_x, screen_y, GRID_SIZE, GRID_SIZE)
-        
+
         # Draw the main block
         pygame.draw.rect(screen, self.color, rect)
 
@@ -117,7 +119,7 @@ class Block:
                 pygame.draw.rect(
                     screen, (red, green, 0), (bar_x, bar_y, fill_width, bar_height)
                 )
-    
+
     @staticmethod
     def draw_empty_block(screen, screen_x, screen_y):
         """Draw an empty block (air) at the given screen coordinates"""

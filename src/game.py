@@ -28,41 +28,43 @@ class Game:
         # Day/night cycle settings
         self.day_duration = 120.0  # 2 minutes for day (in seconds)
         self.night_duration = 120.0  # 2 minutes for night (in seconds)
-        self.cycle_duration = self.day_duration + self.night_duration  # Total cycle: 4 minutes
-        
+        self.cycle_duration = (
+            self.day_duration + self.night_duration
+        )  # Total cycle: 4 minutes
+
         # Time tracking (starts at noon - full daylight)
         self.time_elapsed = 0.0  # Time elapsed in current cycle
         self.current_time_of_day = 0.0  # 0.0 = noon, 0.5 = midnight, 1.0 = noon again
-        
+
         # Light level (0.0 = pitch black, 1.0 = full daylight)
         self.light_level = 1.0  # Start at full daylight (noon)
 
         # Generate initial chunks around player
         self._generate_chunks_around_player()
-    
+
     def update_day_cycle(self, dt):
         """Update the day/night cycle and lighting"""
         # Update time
         self.time_elapsed += dt
-        
+
         # Calculate current time of day (0.0 = noon, 0.5 = midnight, 1.0 = noon again)
         self.current_time_of_day = (self.time_elapsed / self.cycle_duration) % 1.0
-        
+
         # Calculate light level using smooth sine wave
         # At 0.0 (noon): light_level = 1.0 (full daylight)
         # At 0.5 (midnight): light_level = 0.0 (pitch black)
         # Smooth transition between day and night
         self.light_level = (math.cos(self.current_time_of_day * 2 * math.pi) + 1) / 2
-        
+
         # Convert light level to darkness alpha (0-220)
         # light_level 1.0 -> darkness_alpha 0 (full light)
         # light_level 0.0 -> darkness_alpha 220 (very dark)
         max_darkness = 220
         darkness_alpha = int(max_darkness * (1.0 - self.light_level))
-        
+
         # Update lighting system
         lighting_system.set_darkness_level(darkness_alpha)
-    
+
     def get_time_of_day_string(self):
         """Get a readable string representing the current time of day"""
         if 0.0 <= self.current_time_of_day < 0.25:
@@ -73,7 +75,7 @@ class Game:
             return "Night"
         else:
             return "Dawn"
-    
+
     def is_daytime(self):
         """Check if it's currently daytime (light level > 0.5)"""
         return self.light_level > 0.5
@@ -135,7 +137,7 @@ class Game:
             chunk[(local_x, local_y)] = Block(new_block_type)
             return True
         return False
-    
+
     def draw(self, screen):
         """Draw the game world"""
         screen.fill(BLACK)
@@ -164,14 +166,18 @@ class Game:
                                 block.current_health / block.max_health
                             )
 
-                        block.draw(screen, screen_x, screen_y, is_being_mined, mining_progress)
+                        block.draw(
+                            screen, screen_x, screen_y, is_being_mined, mining_progress
+                        )
                     else:
                         # Draw empty block (air)
                         Block.draw_empty_block(screen, screen_x, screen_y)
 
         # Draw targeting border around the block the player is facing
         target_x, target_y = self.player.get_target_position()
-        target_screen_x, target_screen_y = self.camera.world_to_screen(target_x, target_y)
+        target_screen_x, target_screen_y = self.camera.world_to_screen(
+            target_x, target_y
+        )
 
         # Only draw if target is on screen
         if (
@@ -194,7 +200,7 @@ class Game:
 
         # Draw inventory (UI should be on top of lighting)
         self._draw_inventory(screen)
-    
+
     def _draw_player(self, screen):
         """Draw the player"""
         player_screen_x, player_screen_y = self.camera.world_to_screen(
@@ -233,7 +239,7 @@ class Game:
                 end_x, end_y = center_x - arrow_length, center_y
 
             pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
-    
+
     def _draw_inventory(self, screen):
         """Draw the player inventory"""
         # Draw black inventory background
@@ -286,58 +292,78 @@ class Game:
 
         # Draw day/night indicator with sun/moon visual
         self._draw_day_night_indicator(screen)
-    
+
     def _draw_day_night_indicator(self, screen):
         """Draw a visual day/night indicator with sun/moon"""
         # Position for the indicator (right side of inventory area, vertically centered)
         indicator_x = WINDOW_SIZE[0] - 120
         indicator_y = GAME_HEIGHT + (INVENTORY_HEIGHT // 2)
         indicator_size = 25
-        
+
         # Colors
         sun_color = (255, 255, 0)  # Yellow
         moon_color = (220, 220, 220)  # Light gray
         night_sky_color = (20, 20, 40)  # Dark blue
         day_sky_color = (135, 206, 235)  # Sky blue
-        
+
         # Calculate background color based on time of day
         sky_blend = self.light_level
         bg_color = (
             int(night_sky_color[0] * (1 - sky_blend) + day_sky_color[0] * sky_blend),
             int(night_sky_color[1] * (1 - sky_blend) + day_sky_color[1] * sky_blend),
-            int(night_sky_color[2] * (1 - sky_blend) + day_sky_color[2] * sky_blend)
+            int(night_sky_color[2] * (1 - sky_blend) + day_sky_color[2] * sky_blend),
         )
-        
+
         # Draw background circle
         pygame.draw.circle(screen, bg_color, (indicator_x, indicator_y), indicator_size)
         pygame.draw.circle(screen, WHITE, (indicator_x, indicator_y), indicator_size, 2)
-        
+
         # Draw sun or moon centered in the circle
         if self.is_daytime():
             # Draw sun centered in the circle
             sun_radius = 8
-            pygame.draw.circle(screen, sun_color, (indicator_x, indicator_y), sun_radius)
-            
+            pygame.draw.circle(
+                screen, sun_color, (indicator_x, indicator_y), sun_radius
+            )
+
             # Draw sun rays
             for i in range(8):
                 ray_angle = i * math.pi / 4
                 ray_length = 12
                 ray_start_x = indicator_x + int((sun_radius + 2) * math.cos(ray_angle))
                 ray_start_y = indicator_y + int((sun_radius + 2) * math.sin(ray_angle))
-                ray_end_x = indicator_x + int((sun_radius + ray_length) * math.cos(ray_angle))
-                ray_end_y = indicator_y + int((sun_radius + ray_length) * math.sin(ray_angle))
-                pygame.draw.line(screen, sun_color, (ray_start_x, ray_start_y), (ray_end_x, ray_end_y), 2)
+                ray_end_x = indicator_x + int(
+                    (sun_radius + ray_length) * math.cos(ray_angle)
+                )
+                ray_end_y = indicator_y + int(
+                    (sun_radius + ray_length) * math.sin(ray_angle)
+                )
+                pygame.draw.line(
+                    screen,
+                    sun_color,
+                    (ray_start_x, ray_start_y),
+                    (ray_end_x, ray_end_y),
+                    2,
+                )
         else:
             # Draw moon centered in the circle
             moon_radius = 8
-            pygame.draw.circle(screen, moon_color, (indicator_x, indicator_y), moon_radius)
-            
+            pygame.draw.circle(
+                screen, moon_color, (indicator_x, indicator_y), moon_radius
+            )
+
             # Draw moon craters (simple circles)
             crater_color = (180, 180, 180)
-            pygame.draw.circle(screen, crater_color, (indicator_x - 2, indicator_y - 2), 2)
-            pygame.draw.circle(screen, crater_color, (indicator_x + 3, indicator_y + 1), 1)
-            pygame.draw.circle(screen, crater_color, (indicator_x - 1, indicator_y + 3), 1)
-        
+            pygame.draw.circle(
+                screen, crater_color, (indicator_x - 2, indicator_y - 2), 2
+            )
+            pygame.draw.circle(
+                screen, crater_color, (indicator_x + 3, indicator_y + 1), 1
+            )
+            pygame.draw.circle(
+                screen, crater_color, (indicator_x - 1, indicator_y + 3), 1
+            )
+
         # Draw time text below the indicator
         font_small = pygame.font.Font(None, 18)
         time_text = self.get_time_of_day_string()

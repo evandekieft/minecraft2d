@@ -8,10 +8,10 @@ from world_manager import WorldManager
 # Initialize PyGame
 pygame.init()
 
+
 # Set up the display
 screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Minecraft2D")
-
 
 
 def main():
@@ -118,7 +118,6 @@ def main():
             menu_system.draw()
 
         pygame.display.flip()
-
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 # VS Code settings
 .vscode/
 
+# game saves
+saves
+
 # Python
 __pycache__/
 *.pyc

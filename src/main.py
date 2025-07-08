@@ -148,7 +148,7 @@ def main():
             game._generate_chunks_around_player()
 
             # Update lighting system
-            lighting_system.update_player_light(game.player)
+            # lighting_system.update_player_light(game.player)  # Disabled - player no longer has light
 
             # Update day cycle if present
             if hasattr(game, "update_day_cycle"):
@@ -216,7 +216,10 @@ def draw_game(screen, game):
             )
             pygame.draw.rect(screen, (200, 200, 200), border_rect, 2)
 
-    # Draw player
+    # Apply lighting effect
+    lighting_system.apply_lighting(screen, game.camera)
+
+    # Draw player (after lighting, so player is visible in darkness)
     player_screen_x, player_screen_y = game.camera.world_to_screen(
         game.player.world_x, game.player.world_y
     )
@@ -253,9 +256,6 @@ def draw_game(screen, game):
             end_x, end_y = center_x - arrow_length, center_y
 
         pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
-
-    # Apply lighting effect
-    lighting_system.apply_lighting(screen, game.camera)
 
     # Draw inventory (UI should be on top of lighting)
     draw_inventory(screen, game.player)

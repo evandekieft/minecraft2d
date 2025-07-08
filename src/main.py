@@ -1,18 +1,9 @@
 import pygame
 import sys
 from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE
-from constants import (
-    WINDOW_SIZE,
-    GRID_SIZE,
-    BLACK,
-    WHITE,
-    GAME_HEIGHT,
-    INVENTORY_HEIGHT,
-)
+from constants import WINDOW_SIZE
 from menu import MenuSystem
-from block import Block
 from world_manager import WorldManager
-from lighting import lighting_system
 
 # Initialize PyGame
 pygame.init()
@@ -21,38 +12,6 @@ pygame.init()
 screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Minecraft2D")
 
-
-def draw_block(screen_x, screen_y, block, is_being_mined=False, mining_progress=0.0):
-    rect = pygame.Rect(screen_x, screen_y, GRID_SIZE, GRID_SIZE)
-    if block:
-        # Draw the main block
-        pygame.draw.rect(screen, block.color, rect)
-
-        # Draw mining progress bar if being mined
-        if is_being_mined and mining_progress > 0:
-            # Calculate progress bar dimensions
-            bar_height = max(2, GRID_SIZE // 10)  # At least 2 pixels high
-            bar_width = int(GRID_SIZE * 0.8)  # 80% of block width
-            bar_x = screen_x + (GRID_SIZE - bar_width) // 2
-            bar_y = screen_y + GRID_SIZE - bar_height - 2  # 2px from bottom
-
-            # Draw background of progress bar (empty part)
-            pygame.draw.rect(
-                screen, (100, 100, 100), (bar_x, bar_y, bar_width, bar_height)
-            )
-
-            # Draw filled part of progress bar
-            fill_width = int(bar_width * mining_progress)
-            if fill_width > 0:
-                # Color changes from red to green as progress increases
-                red = int(255 * (1 - mining_progress))
-                green = int(255 * mining_progress)
-                pygame.draw.rect(
-                    screen, (red, green, 0), (bar_x, bar_y, fill_width, bar_height)
-                )
-    else:
-        # Draw empty block (air)
-        pygame.draw.rect(screen, WHITE, rect, 1)
 
 
 def main():
@@ -149,228 +108,17 @@ def main():
             game.update_day_cycle(dt)
 
             # Draw game
-            draw_game(screen, game)
+            game.draw(screen)
 
         elif game_state == "paused":
             # Draw game in background (frozen)
             if game:
-                draw_game(screen, game)
+                game.draw(screen)
             # Draw pause menu on top
             menu_system.draw()
 
         pygame.display.flip()
 
-
-def draw_game(screen, game):
-    """Draw the game world"""
-    screen.fill(BLACK)
-
-    # Draw world - only visible blocks
-    left, right, top, bottom = game.camera.get_visible_bounds()
-
-    for world_y in range(top, bottom + 1):
-        for world_x in range(left, right + 1):
-            screen_x, screen_y = game.camera.world_to_screen(world_x, world_y)
-            # Only draw if on screen (within game area)
-            if (
-                -GRID_SIZE < screen_x < WINDOW_SIZE[0]
-                and -GRID_SIZE < screen_y < GAME_HEIGHT
-            ):
-                block = game.get_block(world_x, world_y)
-                if block:
-                    # Check if this block is being mined
-                    is_being_mined = (
-                        game.player.is_mining
-                        and game.player.mining_target == (world_x, world_y)
-                    )
-                    mining_progress = 0.0
-                    if is_being_mined and block.minable:
-                        mining_progress = 1.0 - (
-                            block.current_health / block.max_health
-                        )
-
-                    draw_block(
-                        screen_x, screen_y, block, is_being_mined, mining_progress
-                    )
-
-    # Draw targeting border around the block the player is facing
-    target_x, target_y = game.player.get_target_position()
-    target_screen_x, target_screen_y = game.camera.world_to_screen(target_x, target_y)
-
-    # Only draw if target is on screen
-    if (
-        -GRID_SIZE < target_screen_x < WINDOW_SIZE[0]
-        and -GRID_SIZE < target_screen_y < GAME_HEIGHT
-    ):
-        target_block = game.get_block(target_x, target_y)
-        if target_block:  # Only show border if there's actually a block there
-            # Draw a subtle border - light gray, thin line
-            border_rect = pygame.Rect(
-                target_screen_x, target_screen_y, GRID_SIZE, GRID_SIZE
-            )
-            pygame.draw.rect(screen, (200, 200, 200), border_rect, 2)
-
-    # Apply lighting effect
-    lighting_system.apply_lighting(screen, game.camera)
-
-    # Draw player (after lighting, so player is visible in darkness)
-    player_screen_x, player_screen_y = game.camera.world_to_screen(
-        game.player.world_x, game.player.world_y
-    )
-
-    # Try to use sprite first, fall back to colored rectangle
-    player_sprite = game.player.get_current_sprite()
-    if player_sprite:
-        # Center the sprite in the grid cell
-        sprite_rect = player_sprite.get_rect()
-        sprite_rect.center = (
-            player_screen_x + GRID_SIZE // 2,
-            player_screen_y + GRID_SIZE // 2,
-        )
-        screen.blit(player_sprite, sprite_rect)
-    else:
-        # Fallback to colored rectangle with orientation arrow
-        player_rect = pygame.Rect(
-            player_screen_x + 2, player_screen_y + 2, GRID_SIZE - 4, GRID_SIZE - 4
-        )
-        pygame.draw.rect(screen, game.player.color, player_rect)
-
-        # Draw orientation indicator
-        center_x = player_screen_x + GRID_SIZE // 2
-        center_y = player_screen_y + GRID_SIZE // 2
-        arrow_length = 4
-
-        if game.player.orientation == "north":
-            end_x, end_y = center_x, center_y - arrow_length
-        elif game.player.orientation == "south":
-            end_x, end_y = center_x, center_y + arrow_length
-        elif game.player.orientation == "east":
-            end_x, end_y = center_x + arrow_length, center_y
-        elif game.player.orientation == "west":
-            end_x, end_y = center_x - arrow_length, center_y
-
-        pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
-
-    # Draw inventory (UI should be on top of lighting)
-    draw_inventory(screen, game)
-
-
-def draw_inventory(screen, game):
-
-    # Draw black inventory background
-    inventory_rect = pygame.Rect(0, GAME_HEIGHT, WINDOW_SIZE[0], INVENTORY_HEIGHT)
-    pygame.draw.rect(screen, BLACK, inventory_rect)
-
-    # Get top 5 inventory items
-    top_items = game.player.get_top_inventory_items(5)
-
-    # Calculate slot dimensions and positions
-    slot_size = 50
-    slot_spacing = 10
-    total_width = 5 * slot_size + 4 * slot_spacing
-    start_x = (WINDOW_SIZE[0] - total_width) // 2
-    start_y = GAME_HEIGHT + (INVENTORY_HEIGHT - slot_size) // 2
-
-    # Draw 5 inventory slots
-    for i in range(5):
-        slot_x = start_x + i * (slot_size + slot_spacing)
-        slot_y = start_y
-
-        # Draw slot background
-        slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-        pygame.draw.rect(screen, (64, 64, 64), slot_rect)  # Dark gray
-
-        # Draw border (highlight active slot)
-        border_color = WHITE if i == game.player.active_slot else (128, 128, 128)
-        border_width = 3 if i == game.player.active_slot else 1
-        pygame.draw.rect(screen, border_color, slot_rect, border_width)
-
-        # Draw block if available
-        if i < len(top_items):
-            block_type, count = top_items[i]
-
-            # Get block color (import from world to get Block class)
-            temp_block = Block(block_type)
-
-            # Draw block color
-            block_rect = pygame.Rect(
-                slot_x + 5, slot_y + 5, slot_size - 10, slot_size - 30
-            )
-            pygame.draw.rect(screen, temp_block.color, block_rect)
-
-            # Draw count text
-            font = pygame.font.Font(None, 24)
-            count_text = font.render(str(count), True, WHITE)
-            text_x = slot_x + slot_size // 2 - count_text.get_width() // 2
-            text_y = slot_y + slot_size - 20
-            screen.blit(count_text, (text_x, text_y))
-
-    # Draw day/night indicator with sun/moon visual
-    draw_day_night_indicator(screen, game)
-
-
-def draw_day_night_indicator(screen, game):
-    """Draw a visual day/night indicator with sun/moon"""
-    import math
-    
-    # Position for the indicator (right side of inventory area, vertically centered)
-    indicator_x = WINDOW_SIZE[0] - 120
-    indicator_y = GAME_HEIGHT + (INVENTORY_HEIGHT // 2)
-    indicator_size = 25
-    
-    # Colors
-    sun_color = (255, 255, 0)  # Yellow
-    moon_color = (220, 220, 220)  # Light gray
-    night_sky_color = (20, 20, 40)  # Dark blue
-    day_sky_color = (135, 206, 235)  # Sky blue
-    
-    # Calculate background color based on time of day
-    sky_blend = game.light_level
-    bg_color = (
-        int(night_sky_color[0] * (1 - sky_blend) + day_sky_color[0] * sky_blend),
-        int(night_sky_color[1] * (1 - sky_blend) + day_sky_color[1] * sky_blend),
-        int(night_sky_color[2] * (1 - sky_blend) + day_sky_color[2] * sky_blend)
-    )
-    
-    # Draw background circle
-    pygame.draw.circle(screen, bg_color, (indicator_x, indicator_y), indicator_size)
-    pygame.draw.circle(screen, WHITE, (indicator_x, indicator_y), indicator_size, 2)
-    
-    # Draw sun or moon centered in the circle
-    if game.is_daytime():
-        # Draw sun centered in the circle
-        sun_radius = 8
-        pygame.draw.circle(screen, sun_color, (indicator_x, indicator_y), sun_radius)
-        
-        # Draw sun rays
-        for i in range(8):
-            ray_angle = i * math.pi / 4
-            ray_length = 12
-            ray_start_x = indicator_x + int((sun_radius + 2) * math.cos(ray_angle))
-            ray_start_y = indicator_y + int((sun_radius + 2) * math.sin(ray_angle))
-            ray_end_x = indicator_x + int((sun_radius + ray_length) * math.cos(ray_angle))
-            ray_end_y = indicator_y + int((sun_radius + ray_length) * math.sin(ray_angle))
-            pygame.draw.line(screen, sun_color, (ray_start_x, ray_start_y), (ray_end_x, ray_end_y), 2)
-    else:
-        # Draw moon centered in the circle
-        moon_radius = 8
-        pygame.draw.circle(screen, moon_color, (indicator_x, indicator_y), moon_radius)
-        
-        # Draw moon craters (simple circles)
-        crater_color = (180, 180, 180)
-        pygame.draw.circle(screen, crater_color, (indicator_x - 2, indicator_y - 2), 2)
-        pygame.draw.circle(screen, crater_color, (indicator_x + 3, indicator_y + 1), 1)
-        pygame.draw.circle(screen, crater_color, (indicator_x - 1, indicator_y + 3), 1)
-    
-    # Draw time text below the indicator
-    font_small = pygame.font.Font(None, 18)
-    time_text = game.get_time_of_day_string()
-    light_pct = int(game.light_level * 100)
-    display_text = f"{time_text} ({light_pct}%)"
-    text_surface = font_small.render(display_text, True, WHITE)
-    text_x = indicator_x - text_surface.get_width() // 2
-    text_y = indicator_y + indicator_size + 8
-    screen.blit(text_surface, (text_x, text_y))
 
 
 if __name__ == "__main__":

@@ -14,7 +14,9 @@ class Player:
         self.is_mining = False
         self.mining_target = None  # (x, y) coordinates of block being mined
         self.mining_damage_rate = 1.0  # Base mining rate (damage per second)
-        self.just_finished_mining = False  # Prevent immediate block placement after mining
+        self.just_finished_mining = (
+            False  # Prevent immediate block placement after mining
+        )
 
         # Sprites will be loaded after pygame display is initialized
         self.sprites = {}
@@ -23,7 +25,7 @@ class Player:
     def handle_keydown(self, key, game=None):
         target_orientation = None
         dx, dy = 0, 0
-        
+
         if key == K_a:
             target_orientation = "west"
             dx = -1
@@ -49,7 +51,7 @@ class Player:
             self.set_active_slot(3)
         elif key == K_5:
             self.set_active_slot(4)
-        
+
         # Handle movement/orientation change
         if target_orientation:
             if self.orientation == target_orientation:
@@ -77,7 +79,7 @@ class Player:
     def move(self, dx, dy, game):
         new_x = self.world_x + dx
         new_y = self.world_y + dy
-        
+
         # Check if target block is walkable
         target_block = game.get_block(new_x, new_y)
         if target_block and target_block.walkable:
@@ -98,14 +100,14 @@ class Player:
             dy = -1
         elif self.orientation == "south":
             dy = 1
-        
+
         return self.world_x + dx, self.world_y + dy
 
     def start_mining(self, game):
         """Start mining the block the player is facing"""
         target_x, target_y = self.get_target_position()
         target_block = game.get_block(target_x, target_y)
-        
+
         if target_block and target_block.minable:
             self.is_mining = True
             self.mining_target = (target_x, target_y)
@@ -117,7 +119,7 @@ class Player:
             target_block = game.get_block(target_x, target_y)
             if target_block:
                 target_block.reset_health()
-        
+
         self.is_mining = False
         self.mining_target = None
 
@@ -125,17 +127,17 @@ class Player:
         """Process mining damage over time"""
         if not self.mining_target:
             return
-        
+
         target_x, target_y = self.mining_target
         target_block = game.get_block(target_x, target_y)
-        
+
         if not target_block or not target_block.minable:
             self.stop_mining(game)
             return
-        
+
         # Calculate mining damage this frame
         damage = self.mining_damage_rate * dt
-        
+
         # Apply damage to block
         if target_block.take_damage(damage):
             # Block is destroyed
@@ -147,11 +149,11 @@ class Player:
         mining_result = target_block.get_mining_result()
         if mining_result:
             self.add_to_inventory(mining_result)
-        
+
         # Replace the block
         replacement_type = target_block.get_replacement_block()
         game.replace_block(target_x, target_y, replacement_type)
-        
+
         # Stop mining and set flag to prevent immediate placement
         self.is_mining = False
         self.mining_target = None
@@ -196,7 +198,7 @@ class Player:
         target_x, target_y = self.get_target_position()
         block_type = self.get_active_block_type()
         target_block = game.get_block(target_x, target_y)
-        
+
         if block_type and target_block and target_block.walkable:
             # Check if we have the block in inventory
             if block_type in self.inventory and self.inventory[block_type] > 0:
@@ -207,5 +209,3 @@ class Player:
                 # Remove the block type entirely if count reaches 0
                 if self.inventory[block_type] == 0:
                     del self.inventory[block_type]
-
-    

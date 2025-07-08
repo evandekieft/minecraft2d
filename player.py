@@ -20,31 +20,34 @@ class Player:
         self.has_sprites = False
 
     def handle_keydown(self, key, game=None):
-        if key in (K_a, K_d, K_w, K_s):
-            if key == K_a:
-                self.orientation = "west"
-            elif key == K_d:
-                self.orientation = "east"
-            elif key == K_w:
-                self.orientation = "north"
-            elif key == K_s:
-                self.orientation = "south"
+        dx, dy = 0, 0
+        moved = False
+        
+        if key == K_a:
+            self.orientation = "west"
+            dx = -1
+            moved = True
+        elif key == K_d:
+            self.orientation = "east"
+            dx = 1
+            moved = True
+        elif key == K_w:
+            self.orientation = "north"
+            dy = -1
+            moved = True
+        elif key == K_s:
+            self.orientation = "south"
+            dy = 1
+            moved = True
         elif key == K_SPACE and game:
             self.start_mining(game)
+            return
+            
+        if moved and game:
+            self.move(dx, dy, game)
 
     def handle_keyup(self, key, game):
-        if key in (K_a, K_d, K_w, K_s):
-            dx, dy = 0, 0
-            if self.orientation == "west":
-                dx = -1
-            elif self.orientation == "east":
-                dx = 1
-            elif self.orientation == "north":
-                dy = -1
-            elif self.orientation == "south":
-                dy = 1
-            self.move(dx, dy, game)
-        elif key == K_SPACE:
+        if key == K_SPACE:
             self.stop_mining(game)
 
     def update(self, dt, game=None):

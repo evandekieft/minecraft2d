@@ -1,4 +1,4 @@
-from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE
+from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
 from constants import BLUE
 from sprites import sprite_manager
 
@@ -42,6 +42,16 @@ class Player:
         elif key == K_SPACE and game:
             self.start_mining(game)
             return
+        elif key == K_1:
+            self.set_active_slot(0)
+        elif key == K_2:
+            self.set_active_slot(1)
+        elif key == K_3:
+            self.set_active_slot(2)
+        elif key == K_4:
+            self.set_active_slot(3)
+        elif key == K_5:
+            self.set_active_slot(4)
             
         if moved and game:
             self.move(dx, dy, game)
@@ -167,3 +177,6 @@ class Player:
         if self.has_sprites and self.orientation in self.sprites:
             return self.sprites[self.orientation]
         return None
+
+    def set_active_slot(self, slot):
+        self.active_slot = slot

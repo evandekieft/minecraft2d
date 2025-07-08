@@ -41,7 +41,7 @@ class Block:
     def _get_mining_difficulty(self, block_type):
         # Mining difficulty in health points (higher = takes longer)
         difficulties = {
-            "wood": 3.0,   # 3 seconds with bare hands
+            "wood": 1.5,   # 1.5 seconds with bare hands (twice as fast as before)
             "stone": 5.0,  # 5 seconds with bare hands  
             "coal": 4.0,   # 4 seconds with bare hands
             "diamond": 8.0, # 8 seconds with bare hands (very hard)

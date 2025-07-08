@@ -15,19 +15,31 @@ pygame.display.set_caption("Minecraft2D")
 def draw_block(screen_x, screen_y, block, is_being_mined=False, mining_progress=0.0):
     rect = pygame.Rect(screen_x, screen_y, GRID_SIZE, GRID_SIZE)
     if block:
-        color = block.color
+        # Draw the main block
+        pygame.draw.rect(screen, block.color, rect)
         
-        # Apply blinking effect if being mined
-        if is_being_mined:
-            # Blink faster as mining progresses
-            blink_rate = 2.0 + mining_progress * 8.0  # 2-10 Hz
-            blink_phase = pygame.time.get_ticks() / 1000.0 * blink_rate
-            if int(blink_phase) % 2 == 0:
-                # Darken the color during blink
-                color = tuple(max(0, int(c * 0.4)) for c in color)
-        
-        pygame.draw.rect(screen, color, rect)
+        # Draw mining progress bar if being mined
+        if is_being_mined and mining_progress > 0:
+            # Calculate progress bar dimensions
+            bar_height = max(2, GRID_SIZE // 10)  # At least 2 pixels high
+            bar_width = int(GRID_SIZE * 0.8)  # 80% of block width
+            bar_x = screen_x + (GRID_SIZE - bar_width) // 2
+            bar_y = screen_y + GRID_SIZE - bar_height - 2  # 2px from bottom
+            
+            # Draw background of progress bar (empty part)
+            pygame.draw.rect(screen, (100, 100, 100), 
+                           (bar_x, bar_y, bar_width, bar_height))
+            
+            # Draw filled part of progress bar
+            fill_width = int(bar_width * mining_progress)
+            if fill_width > 0:
+                # Color changes from red to green as progress increases
+                red = int(255 * (1 - mining_progress))
+                green = int(255 * mining_progress)
+                pygame.draw.rect(screen, (red, green, 0), 
+                               (bar_x, bar_y, fill_width, bar_height))
     else:
+        # Draw empty block (air)
         pygame.draw.rect(screen, WHITE, rect, 1)
 
 
@@ -148,7 +160,7 @@ def draw_inventory(screen, player):
     # Draw 5 inventory slots
     for i in range(5):
         slot_x = start_x + i * (slot_size + slot_spacing)
-        slot_y = start_y
+        slot_y = start_y 
         
         # Draw slot background
         slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)

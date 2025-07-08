@@ -1,6 +1,7 @@
 from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
 from constants import BLUE
 from sprites import sprite_manager
+import time
 
 
 class Player:
@@ -21,23 +22,32 @@ class Player:
         # Sprites will be loaded after pygame display is initialized
         self.sprites = {}
         self.has_sprites = False
+        
+        # Movement system
+        self.movement_speed = 6.0  # blocks per second
+        self.pressed_keys = set()  # Track currently pressed keys
+        self.movement_timer = 0.0  # Accumulator for movement timing
+        self.move_interval = 1.0 / self.movement_speed  # Time between moves
 
     def handle_keydown(self, key, game=None):
-        target_orientation = None
-        dx, dy = 0, 0
-
-        if key == K_a:
-            target_orientation = "west"
-            dx = -1
-        elif key == K_d:
-            target_orientation = "east"
-            dx = 1
-        elif key == K_w:
-            target_orientation = "north"
-            dy = -1
-        elif key == K_s:
-            target_orientation = "south"
-            dy = 1
+        # Handle movement keys
+        if key in [K_w, K_a, K_s, K_d]:
+            self.pressed_keys.add(key)
+            # Handle immediate orientation change if needed
+            target_orientation = None
+            if key == K_a:
+                target_orientation = "west"
+            elif key == K_d:
+                target_orientation = "east"
+            elif key == K_w:
+                target_orientation = "north"
+            elif key == K_s:
+                target_orientation = "south"
+            
+            if target_orientation and self.orientation != target_orientation:
+                self.orientation = target_orientation
+                # Reset movement timing when changing orientation
+                self.movement_timer = 0.0
         elif key == K_SPACE and game:
             self.start_mining(game)
             return
@@ -52,18 +62,11 @@ class Player:
         elif key == K_5:
             self.set_active_slot(4)
 
-        # Handle movement/orientation change
-        if target_orientation:
-            if self.orientation == target_orientation:
-                # Already facing this direction - move
-                if game:
-                    self.move(dx, dy, game)
-            else:
-                # Not facing this direction - just change orientation
-                self.orientation = target_orientation
-
     def handle_keyup(self, key, game):
-        if key == K_SPACE:
+        # Handle movement keys
+        if key in [K_w, K_a, K_s, K_d]:
+            self.pressed_keys.discard(key)
+        elif key == K_SPACE:
             if self.is_mining:
                 self.stop_mining(game)
             elif not self.just_finished_mining:
@@ -72,9 +75,46 @@ class Player:
             self.just_finished_mining = False
 
     def update(self, dt, game=None):
+        # Handle continuous movement
+        if self.pressed_keys and game:
+            self.process_movement(dt, game)
+            
         # Handle continuous mining
         if self.is_mining and game and self.mining_target:
             self.process_mining(dt, game)
+            
+    def process_movement(self, dt, game):
+        """Process continuous movement based on held keys"""
+        # Accumulate time
+        self.movement_timer += dt
+        
+        # Check if enough time has passed since last move
+        if self.movement_timer < self.move_interval:
+            return
+            
+        # Determine movement direction based on pressed keys
+        dx, dy = 0, 0
+        target_orientation = None
+        
+        # Priority: most recent key press determines direction
+        # Check keys in order of typical priority
+        if K_w in self.pressed_keys:
+            target_orientation = "north"
+            dy = -1
+        elif K_s in self.pressed_keys:
+            target_orientation = "south"
+            dy = 1
+        elif K_a in self.pressed_keys:
+            target_orientation = "west"
+            dx = -1
+        elif K_d in self.pressed_keys:
+            target_orientation = "east"
+            dx = 1
+            
+        # Move if we have a direction and are facing the right way
+        if target_orientation and self.orientation == target_orientation:
+            if self.move(dx, dy, game):
+                self.movement_timer = 0.0  # Reset timer after successful move
 
     def move(self, dx, dy, game):
         new_x = self.world_x + dx
@@ -88,6 +128,8 @@ class Player:
             # Stop mining if player moves
             if self.is_mining:
                 self.stop_mining(game)
+            return True
+        return False
 
     def get_target_position(self):
         """Get the position of the block the player is facing"""

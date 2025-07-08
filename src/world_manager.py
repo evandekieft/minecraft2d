@@ -1,7 +1,7 @@
 import json
 import os
-from world import Game, Block
-from player import Player
+from game import Game
+from block import Block
 
 
 class WorldManager:

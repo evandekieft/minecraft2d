@@ -1,9 +1,8 @@
 import pytest
 from unittest.mock import Mock
-from pygame.locals import K_a, K_d, K_w, K_s, K_UP
+from pygame.locals import K_a, K_d, K_w, K_s
 from player import Player
-from game import Game
-from block import Block
+
 
 
 class TestPlayer:
@@ -36,10 +35,12 @@ class TestPlayer:
 
         player.orientation = "east"
         player.handle_keydown(K_d, mock_game)
+        # Movement now happens in update(), need to wait for move interval
+        player.update(player.move_interval + 0.01, mock_game)
 
         assert player.world_x == 1
         assert player.world_y == 0
-        mock_game.get_block.assert_called_once_with(1, 0)
+        mock_game.get_block.assert_called_with(1, 0)
 
     def test_movement_blocked_by_unwalkable_block(self):
         player = Player()
@@ -83,6 +84,8 @@ class TestPlayer:
         mock_game.get_block.return_value = mock_block
 
         player.handle_keydown(key, mock_game)
+        # Movement now happens in update(), need to wait for move interval
+        player.update(player.move_interval + 0.01, mock_game)
 
         assert player.world_x == expected_dx
         assert player.world_y == expected_dy
@@ -97,12 +100,15 @@ class TestPlayer:
         # Move east
         player.orientation = "east"
         player.handle_keydown(K_d, mock_game)
+        player.update(player.move_interval + 0.01, mock_game)
         assert player.world_x == 1
         assert player.world_y == 0
 
-        # Move north
+        # Release east key and move north
+        player.handle_keyup(K_d, mock_game)
         player.orientation = "north"
         player.handle_keydown(K_w, mock_game)
+        player.update(player.move_interval + 0.01, mock_game)
         assert player.world_x == 1
         assert player.world_y == -1
 
@@ -128,6 +134,71 @@ class TestPlayer:
 
         assert player.world_x == initial_x
         assert player.world_y == initial_y
+        
+    def test_continuous_movement_timing(self):
+        """Test that continuous movement respects timing constraints"""
+        player = Player()
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.walkable = True
+        mock_game.get_block.return_value = mock_block
+        
+        player.orientation = "east"
+        player.handle_keydown(K_d, mock_game)
+        
+        # First update should not move (insufficient time)
+        player.update(0.01, mock_game)
+        assert player.world_x == 0
+        
+        # Add more time to reach the move interval
+        player.update(player.move_interval - 0.01, mock_game)
+        assert player.world_x == 1
+        
+    def test_movement_speed_configuration(self):
+        """Test that movement speed is configurable"""
+        player = Player()
+        assert player.movement_speed == 6.0
+        assert player.move_interval == 1/6.0
+        
+    def test_key_press_tracking(self):
+        """Test that key presses are tracked correctly"""
+        player = Player()
+        mock_game = Mock()
+        
+        # Initially no keys pressed
+        assert len(player.pressed_keys) == 0
+        
+        # Press a key
+        player.handle_keydown(K_w, mock_game)
+        assert K_w in player.pressed_keys
+        
+        # Release the key
+        player.handle_keyup(K_w, mock_game)
+        assert K_w not in player.pressed_keys
+        
+    def test_continuous_movement_while_held(self):
+        """Test that movement continues while key is held"""
+        player = Player()
+        mock_game = Mock()
+        mock_block = Mock()
+        mock_block.walkable = True
+        mock_game.get_block.return_value = mock_block
+        
+        player.orientation = "east"
+        player.handle_keydown(K_d, mock_game)  # Hold down D key
+        
+        # Move multiple times while key is held
+        for i in range(3):
+            player.update(player.move_interval, mock_game)
+            assert player.world_x == i + 1
+            
+        # Release key
+        player.handle_keyup(K_d, mock_game)
+        
+        # Should not move anymore
+        old_x = player.world_x
+        player.update(player.move_interval, mock_game)
+        assert player.world_x == old_x
 
 
 class TestInventory:

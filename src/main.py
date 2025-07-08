@@ -10,6 +10,7 @@ from constants import (
     INVENTORY_HEIGHT,
 )
 from menu import MenuSystem
+from block import Block
 from world_manager import WorldManager
 from lighting import lighting_system
 
@@ -289,8 +290,6 @@ def draw_inventory(screen, game):
             block_type, count = top_items[i]
 
             # Get block color (import from world to get Block class)
-            from world import Block
-
             temp_block = Block(block_type)
 
             # Draw block color

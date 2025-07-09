@@ -159,24 +159,20 @@ class GameWorld:
                     and -GRID_SIZE < screen_y < self.camera.game_height
                 ):
                     block = self.get_block(world_x, world_y)
-                    if block:
-                        # Check if this block is being mined
-                        is_being_mined = (
-                            self.player.is_mining
-                            and self.player.mining_target == (world_x, world_y)
+                    # Check if this block is being mined
+                    is_being_mined = (
+                        self.player.is_mining
+                        and self.player.mining_target == (world_x, world_y)
+                    )
+                    mining_progress = 0.0
+                    if is_being_mined and block.type.minable:
+                        mining_progress = 1.0 - (
+                            block.current_health / block.max_health
                         )
-                        mining_progress = 0.0
-                        if is_being_mined and block.type.minable:
-                            mining_progress = 1.0 - (
-                                block.current_health / block.max_health
-                            )
 
-                        block.draw(
-                            screen, screen_x, screen_y, is_being_mined, mining_progress
-                        )
-                    else:
-                        # Draw empty block (air)
-                        Block.draw_empty_block(screen, screen_x, screen_y)
+                    block.draw(
+                        screen, screen_x, screen_y, is_being_mined, mining_progress
+                    )
 
         # Draw targeting border around the block the player is facing
         target_x, target_y = self.player.get_target_position()

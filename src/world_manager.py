@@ -2,6 +2,7 @@ import json
 import os
 from game_world import GameWorld
 from block import Block
+from block_type import BlockType
 
 
 class WorldManager:
@@ -42,7 +43,7 @@ class WorldManager:
                 for (local_x, local_y), block in chunk.items():
                     block_key = f"{local_x},{local_y}"
                     chunk_data[block_key] = {
-                        "type": block.type,
+                        "type": block.type.value,  # Save as string value
                         "current_health": block.current_health,
                     }
 
@@ -96,7 +97,10 @@ class WorldManager:
 
                 for block_key, block_data in chunk_data.items():
                     local_x, local_y = map(int, block_key.split(","))
-                    block = Block(block_data["type"])
+                    # Convert string back to BlockType enum
+                    block_type_str = block_data["type"]
+                    block_type = BlockType(block_type_str)
+                    block = Block(block_type)
                     block.current_health = block_data["current_health"]
                     chunk[(local_x, local_y)] = block
 

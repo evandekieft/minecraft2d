@@ -8,6 +8,7 @@ from src.game_world import GameWorld
 from src.camera import Camera
 from src.menu import MenuSystem
 from src.lighting import lighting_system
+from block_type import BlockType
 
 
 class TestWindowResize:
@@ -178,16 +179,19 @@ class TestResizeEdgeCases:
         # Should still work and generate chunks in negative space
         block = game_world.get_block(-55, -55)
         assert block is not None
-        assert block.type in [
-            "water",
-            "sand",
-            "grass",
-            "stone",
-            "wood",
-            "coal",
-            "lava",
-            "diamond",
+        
+        valid_types = [
+            BlockType.WATER,
+            BlockType.SAND,
+            BlockType.GRASS,
+            BlockType.DIRT,
+            BlockType.STONE,
+            BlockType.WOOD,
+            BlockType.COAL,
+            BlockType.LAVA,
+            BlockType.DIAMOND,
         ]
+        assert block.type in valid_types
 
     def test_multiple_consecutive_resizes(self, pygame_setup):
         """Test multiple consecutive resizes"""

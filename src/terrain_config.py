@@ -10,13 +10,14 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Callable
 import random
 import noise
+from block_type import BlockType
 
 
 @dataclass
 class TerrainLayer:
     """Configuration for a base terrain layer"""
 
-    name: str
+    name: BlockType
     threshold: float  # Noise value threshold (0-1)
     target_percentage: float  # Desired percentage of terrain
     description: str = ""
@@ -26,8 +27,8 @@ class TerrainLayer:
 class FeatureRule:
     """Configuration for a terrain feature (blocks that spawn on base terrain)"""
 
-    name: str
-    base_terrain: List[str]  # Which base terrain types this can spawn on
+    name: BlockType
+    base_terrain: List[BlockType]  # Which base terrain types this can spawn on
     spawn_chance: float  # Probability (0-1) of spawning
     noise_threshold: float  # Minimum noise value required
     requires_deep: bool = False  # Whether this requires deep underground areas
@@ -41,21 +42,35 @@ class TerrainConfig:
     def __init__(self):
         # Base terrain layers (ordered by noise threshold)
         self.base_layers = [
-            TerrainLayer("water", 0.25, 25.0, "Water in low-lying areas"),
-            TerrainLayer("sand", 0.35, 10.0, "Sand beaches around water"),
-            TerrainLayer("grass", 0.70, 35.0, "Grass fields and plains"),
-            TerrainLayer("stone", 0.84, 14.0, "Stone mountains and hills"),
+            TerrainLayer(BlockType.WATER, 0.25, 25.0, "Water in low-lying areas"),
+            TerrainLayer(BlockType.SAND, 0.35, 10.0, "Sand beaches around water"),
+            TerrainLayer(BlockType.GRASS, 0.70, 35.0, "Grass fields and plains"),
+            TerrainLayer(BlockType.STONE, 0.84, 14.0, "Stone mountains and hills"),
         ]
 
         # Feature rules (processed in order)
         self.feature_rules = [
             FeatureRule(
-                "wood", ["grass", "dirt"], 0.75, 0.3, False, 10.0, "Trees on grass/dirt"
+                BlockType.WOOD,
+                [BlockType.GRASS, BlockType.DIRT],
+                0.75,
+                0.3,
+                False,
+                10.0,
+                "Trees on grass/dirt",
             ),
-            FeatureRule("lava", ["stone"], 0.80, 0.4, True, 5.0, "Lava in deep areas"),
             FeatureRule(
-                "diamond",
-                ["stone"],
+                BlockType.LAVA,
+                [BlockType.STONE],
+                0.80,
+                0.4,
+                True,
+                5.0,
+                "Lava in deep areas",
+            ),
+            FeatureRule(
+                BlockType.DIAMOND,
+                [BlockType.STONE],
                 0.30,
                 0.6,
                 True,
@@ -63,7 +78,13 @@ class TerrainConfig:
                 "Rare diamonds deep underground",
             ),
             FeatureRule(
-                "coal", ["stone"], 0.15, 0.2, False, 0.0, "Coal in stone areas"
+                BlockType.COAL,
+                [BlockType.STONE],
+                0.15,
+                0.2,
+                False,
+                0.0,
+                "Coal in stone areas",
             ),
         ]
 
@@ -94,7 +115,7 @@ class TerrainConfig:
             "lava_pool_threshold": 0.2,
         }
 
-    def get_target_distribution(self) -> Dict[str, float]:
+    def get_target_distribution(self) -> Dict[BlockType, float]:
         """Get the target distribution for all terrain types"""
         distribution = {}
 
@@ -123,12 +144,14 @@ class TerrainConfig:
                 return rule
         return None
 
-    def auto_adjust_thresholds(self, actual_distribution: Dict[str, Dict[str, float]]):
+    def auto_adjust_thresholds(
+        self, actual_distribution: Dict[BlockType, Dict[str, float]]
+    ):
         """
         Automatically adjust thresholds based on actual vs target distribution
 
         Args:
-            actual_distribution: Dict with format {'block_type': {'percentage': float}}
+            actual_distribution: Dict with format {BlockType: {'percentage': float}}
         """
         print("Auto-adjusting thresholds based on actual distribution...")
 
@@ -151,7 +174,7 @@ class TerrainConfig:
                     )  # Clamp to reasonable range
 
                     print(
-                        f"  {layer.name}: {actual_pct:.1f}% -> {target_pct:.1f}% (threshold: {layer.threshold:.3f})"
+                        f"  {layer.name.value}: {actual_pct:.1f}% -> {target_pct:.1f}% (threshold: {layer.threshold:.3f})"
                     )
 
     def validate_configuration(self) -> List[str]:
@@ -170,10 +193,10 @@ class TerrainConfig:
         for rule in self.feature_rules:
             for base_name in rule.base_terrain:
                 if (
-                    base_name not in base_terrain_names and base_name != "dirt"
+                    base_name not in base_terrain_names and base_name != BlockType.DIRT
                 ):  # dirt is a special case
                     issues.append(
-                        f"Feature rule '{rule.name}' references unknown base terrain '{base_name}'"
+                        f"Feature rule '{rule.name.value}' references unknown base terrain '{base_name.value}'"
                     )
 
         # Check that target percentages are reasonable

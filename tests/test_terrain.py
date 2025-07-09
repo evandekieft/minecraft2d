@@ -1,5 +1,6 @@
 import random
 from game_world import GameWorld
+from block_type import BlockType
 
 
 class TestNoiseGeneration:
@@ -8,15 +9,15 @@ class TestNoiseGeneration:
 
         # Sample blocks and verify they are valid terrain types
         valid_types = {
-            "water",
-            "sand",
-            "grass",
-            "dirt",
-            "wood",
-            "stone",
-            "coal",
-            "lava",
-            "diamond",
+            BlockType.WATER,
+            BlockType.SAND,
+            BlockType.GRASS,
+            BlockType.DIRT,
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.COAL,
+            BlockType.LAVA,
+            BlockType.DIAMOND,
         }
         for x in range(20):
             for y in range(20):
@@ -52,15 +53,15 @@ class TestNoiseGeneration:
 
         # Test that generated blocks are valid terrain types
         valid_types = {
-            "water",
-            "sand",
-            "grass",
-            "dirt",
-            "wood",
-            "stone",
-            "coal",
-            "lava",
-            "diamond",
+            BlockType.WATER,
+            BlockType.SAND,
+            BlockType.GRASS,
+            BlockType.DIRT,
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.COAL,
+            BlockType.LAVA,
+            BlockType.DIAMOND,
         }
         for x in range(20):
             for y in range(20):

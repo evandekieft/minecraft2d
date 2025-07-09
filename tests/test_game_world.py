@@ -3,6 +3,7 @@ from game_world import GameWorld
 from player import Player
 from camera import Camera
 from block import Block
+from block_type import BlockType
 
 
 class TestGameWorld:
@@ -67,15 +68,15 @@ class TestGameWorld:
         assert block is not None
         # With noise generation, any valid block type is acceptable
         valid_types = {
-            "water",
-            "sand",
-            "grass",
-            "dirt",
-            "wood",
-            "stone",
-            "coal",
-            "lava",
-            "diamond",
+            BlockType.WATER,
+            BlockType.SAND,
+            BlockType.GRASS,
+            BlockType.DIRT,
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.COAL,
+            BlockType.LAVA,
+            BlockType.DIAMOND,
         }
         assert block.type in valid_types
 
@@ -99,7 +100,7 @@ class TestGameWorld:
         ), f"Expected at least 3 terrain types, got: {unique_types}"
 
         # Grass should still be the most common, but distribution will vary
-        grass_count = block_types.count("grass")
+        grass_count = block_types.count(BlockType.GRASS)
         grass_ratio = grass_count / total
         assert grass_ratio > 0.3, f"Grass ratio too low: {grass_ratio}"
 
@@ -269,7 +270,7 @@ class TestGameWorldIntegration:
         # Player should be able to access blocks in new area
         block = game_world.get_block(game_world.player.world_x, game_world.player.world_y)
         assert block is not None
-        assert block.type in ["grass", "tree"]
+        assert block.type in [BlockType.GRASS, BlockType.WOOD]
 
     def test_game_world_state_persistence(self):
         game_world = GameWorld()
@@ -309,7 +310,7 @@ class TestGameWorldIntegration:
         for x, y in extreme_coords:
             block = game_world.get_block(x, y)
             assert block is not None
-            assert block.type in ["grass", "tree"]
+            assert block.type in [BlockType.GRASS, BlockType.WOOD]
 
     def test_multiple_chunk_generation_cycles(self):
         game_world = GameWorld()
@@ -325,7 +326,7 @@ class TestGameWorldIntegration:
             # Should always be able to access player position
             block = game_world.get_block(x, y)
             assert block is not None
-            assert block.type in ["grass", "tree", "sand", "water", "stone"]
+            assert block.type in [BlockType.GRASS, BlockType.WOOD, BlockType.SAND, BlockType.WATER, BlockType.STONE]
 
         # Should have generated many chunks
         assert len(game_world.chunks) > 9  # More than initial 3x3
@@ -341,7 +342,7 @@ class TestBlockReplacement:
         original_type = original_block.type
 
         # Replace it with a different type
-        new_type = "dirt" if original_type != "dirt" else "grass"
+        new_type = BlockType.DIRT if original_type != BlockType.DIRT else BlockType.GRASS
         result = game_world.replace_block(0, 0, new_type)
 
         assert result is True
@@ -352,7 +353,7 @@ class TestBlockReplacement:
         game_world = GameWorld()
 
         # Try to replace a block in a chunk that doesn't exist
-        result = game_world.replace_block(1000, 1000, "dirt")
+        result = game_world.replace_block(1000, 1000, BlockType.DIRT)
 
         assert result is False
 
@@ -360,12 +361,12 @@ class TestBlockReplacement:
         game_world = GameWorld()
 
         # Replace a block and ensure chunk structure is maintained
-        game_world.replace_block(0, 0, "wood")
+        game_world.replace_block(0, 0, BlockType.WOOD)
 
         # Should still be able to access the block
         block = game_world.get_block(0, 0)
         assert block is not None
-        assert block.type == "wood"
+        assert block.type == BlockType.WOOD
 
         # Should still be able to access neighboring blocks
         neighbor = game_world.get_block(1, 0)
@@ -375,7 +376,7 @@ class TestBlockReplacement:
         game_world = GameWorld()
 
         # Test replacing with all new block types
-        new_block_types = ["sand", "wood", "stone", "coal", "lava", "diamond", "water"]
+        new_block_types = [BlockType.SAND, BlockType.WOOD, BlockType.STONE, BlockType.COAL, BlockType.LAVA, BlockType.DIAMOND, BlockType.WATER]
 
         for i, block_type in enumerate(new_block_types):
             x, y = i, 0
@@ -391,13 +392,13 @@ class TestBlockReplacement:
 
         # Test that new block types have correct properties
         test_cases = [
-            ("sand", True, False),  # walkable, not minable
-            ("wood", False, True),  # not walkable, minable
-            ("stone", False, True),  # not walkable, minable
-            ("coal", False, True),  # not walkable, minable
-            ("lava", False, False),  # not walkable, not minable
-            ("diamond", False, True),  # not walkable, minable
-            ("water", False, False),  # not walkable, not minable
+            (BlockType.SAND, True, False),  # walkable, not minable
+            (BlockType.WOOD, False, True),  # not walkable, minable
+            (BlockType.STONE, False, True),  # not walkable, minable
+            (BlockType.COAL, False, True),  # not walkable, minable
+            (BlockType.LAVA, False, False),  # not walkable, not minable
+            (BlockType.DIAMOND, False, True),  # not walkable, minable
+            (BlockType.WATER, False, False),  # not walkable, not minable
         ]
 
         for block_type, expected_walkable, expected_minable in test_cases:

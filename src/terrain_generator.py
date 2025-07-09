@@ -9,6 +9,7 @@ and adjust distributions.
 import random
 import noise
 from terrain_config import TerrainConfig, DEFAULT_CONFIG
+from block_type import BlockType
 
 
 class ConfigurableTerrainGenerator:
@@ -71,7 +72,7 @@ class ConfigurableTerrainGenerator:
 
         return enhanced
 
-    def get_base_terrain_type(self, world_x, world_y):
+    def get_base_terrain_type(self, world_x, world_y) -> BlockType:
         """Determine base terrain type using configuration"""
         noise_value = self.get_base_terrain_noise(world_x, world_y)
 
@@ -81,7 +82,11 @@ class ConfigurableTerrainGenerator:
                 return layer.name
 
         # If no threshold matched, return the last layer
-        return self.config.base_layers[-1].name if self.config.base_layers else "stone"
+        return (
+            self.config.base_layers[-1].name
+            if self.config.base_layers
+            else BlockType.STONE
+        )
 
     def is_deep_underground(self, world_x, world_y):
         """Check if location is in deep underground area"""
@@ -116,7 +121,7 @@ class ConfigurableTerrainGenerator:
 
         return lava_noise > self.config.noise_params["lava_pool_threshold"]
 
-    def generate_block_type(self, world_x, world_y):
+    def generate_block_type(self, world_x, world_y) -> BlockType:
         """Generate the final block type using configuration"""
         # Step 1: Get base terrain
         base_terrain = self.get_base_terrain_type(world_x, world_y)
@@ -144,7 +149,7 @@ class ConfigurableTerrainGenerator:
                 and random.random() < rule.spawn_chance
             ):
                 # Special case for lava pools
-                if rule.name == "lava" and rule.requires_deep:
+                if rule.name == BlockType.LAVA and rule.requires_deep:
                     if self.should_place_lava_pool(world_x, world_y):
                         return rule.name
                 else:

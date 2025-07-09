@@ -2,6 +2,7 @@ import pytest
 import pygame
 from unittest.mock import patch
 from block import Block
+from block_type import BlockType
 from constants import (
     GREEN,
     LIGHT_BROWN,
@@ -21,7 +22,7 @@ class TestBlockDrawing:
 
     def test_draw_basic_block(self):
         """Test drawing a basic block without mining progress"""
-        block = Block("grass")
+        block = Block(BlockType.GRASS)
         screen_x, screen_y = 100, 200
 
         with patch("pygame.draw.rect") as mock_draw_rect:
@@ -41,7 +42,7 @@ class TestBlockDrawing:
 
     def test_draw_block_with_mining_progress(self):
         """Test drawing a block with mining progress bar"""
-        block = Block("wood")
+        block = Block(BlockType.WOOD)
         screen_x, screen_y = 50, 75
         mining_progress = 0.6  # 60% mined
 
@@ -79,7 +80,7 @@ class TestBlockDrawing:
 
     def test_draw_block_no_mining_progress_when_not_being_mined(self):
         """Test that no progress bar is drawn when not being mined"""
-        block = Block("stone")
+        block = Block(BlockType.STONE)
 
         with patch("pygame.draw.rect") as mock_draw_rect:
             block.draw(self.screen, 0, 0, is_being_mined=False, mining_progress=0.8)
@@ -89,7 +90,7 @@ class TestBlockDrawing:
 
     def test_draw_block_no_mining_progress_when_zero_progress(self):
         """Test that no progress bar is drawn when progress is zero"""
-        block = Block("coal")
+        block = Block(BlockType.COAL)
 
         with patch("pygame.draw.rect") as mock_draw_rect:
             block.draw(self.screen, 0, 0, is_being_mined=True, mining_progress=0.0)
@@ -121,7 +122,7 @@ class TestBlockDrawing:
 
     def test_progress_bar_dimensions(self):
         """Test that progress bar has correct dimensions"""
-        block = Block("diamond")
+        block = Block(BlockType.DIAMOND)
 
         with patch("pygame.draw.rect") as mock_draw_rect:
             block.draw(self.screen, 0, 0, is_being_mined=True, mining_progress=0.5)
@@ -147,7 +148,7 @@ class TestBlockDrawing:
 
     def test_progress_bar_fill_width(self):
         """Test that progress bar fill has correct width based on progress"""
-        block = Block("stone")
+        block = Block(BlockType.STONE)
         progress = 0.75  # 75% progress
 
         with patch("pygame.draw.rect") as mock_draw_rect:
@@ -169,11 +170,11 @@ class TestBlockDrawing:
     @pytest.mark.parametrize(
         "block_type,expected_color",
         [
-            ("grass", GREEN),
-            ("dirt", DARK_BROWN),
-            ("wood", LIGHT_BROWN),
-            ("stone", GRAY),
-            ("water", BLUE),
+            (BlockType.GRASS, GREEN),
+            (BlockType.DIRT, DARK_BROWN),
+            (BlockType.WOOD, LIGHT_BROWN),
+            (BlockType.STONE, GRAY),
+            (BlockType.WATER, BLUE),
         ],
     )
     def test_draw_different_block_types(self, block_type, expected_color):

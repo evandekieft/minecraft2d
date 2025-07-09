@@ -1,4 +1,5 @@
 import pygame
+from typing import Optional
 from constants import (
     GREEN,
     LIGHT_BROWN,
@@ -12,11 +13,12 @@ from constants import (
     GRAY,
     GRID_SIZE,
 )
+from block_type import BlockType
 
 
 class Block:
-    def __init__(self, block_type):
-        self.type = block_type
+    def __init__(self, block_type: BlockType):
+        self.type: BlockType = block_type
         self.walkable = self._get_walkable(block_type)
         self.color = self._get_color(block_type)
         self.minable = self._get_minable(block_type)
@@ -24,35 +26,40 @@ class Block:
         self.max_health = self.mining_difficulty
         self.current_health = self.max_health
 
-    def _get_walkable(self, block_type):
-        walkable_blocks = {"grass", "dirt", "sand"}
+    def _get_walkable(self, block_type: BlockType) -> bool:
+        walkable_blocks = {BlockType.GRASS, BlockType.DIRT, BlockType.SAND}
         return block_type in walkable_blocks
 
-    def _get_color(self, block_type):
+    def _get_color(self, block_type: BlockType):
         colors = {
-            "grass": GREEN,
-            "dirt": DARK_BROWN,
-            "sand": SAND_COLOR,
-            "wood": LIGHT_BROWN,
-            "stone": GRAY,
-            "coal": BLACK,
-            "lava": RED,
-            "diamond": BRIGHT_BLUE,
-            "water": BLUE,
+            BlockType.GRASS: GREEN,
+            BlockType.DIRT: DARK_BROWN,
+            BlockType.SAND: SAND_COLOR,
+            BlockType.WOOD: LIGHT_BROWN,
+            BlockType.STONE: GRAY,
+            BlockType.COAL: BLACK,
+            BlockType.LAVA: RED,
+            BlockType.DIAMOND: BRIGHT_BLUE,
+            BlockType.WATER: BLUE,
         }
         return colors.get(block_type, WHITE)
 
-    def _get_minable(self, block_type):
-        minable_blocks = {"wood", "stone", "diamond", "coal"}
+    def _get_minable(self, block_type: BlockType) -> bool:
+        minable_blocks = {
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.DIAMOND,
+            BlockType.COAL,
+        }
         return block_type in minable_blocks
 
-    def _get_mining_difficulty(self, block_type):
+    def _get_mining_difficulty(self, block_type: BlockType) -> float:
         # Mining difficulty in health points (higher = takes longer)
         difficulties = {
-            "wood": 1.5,  # 1.5 seconds with bare hands (twice as fast as before)
-            "stone": 5.0,  # 5 seconds with bare hands
-            "coal": 4.0,  # 4 seconds with bare hands
-            "diamond": 8.0,  # 8 seconds with bare hands (very hard)
+            BlockType.WOOD: 1.5,  # 1.5 seconds with bare hands
+            BlockType.STONE: 5.0,  # 5 seconds with bare hands
+            BlockType.COAL: 4.0,  # 4 seconds with bare hands
+            BlockType.DIAMOND: 8.0,  # 8 seconds with bare hands (very hard)
         }
         return difficulties.get(block_type, 1.0)
 
@@ -68,23 +75,23 @@ class Block:
         self.current_health -= damage
         return self.current_health <= 0
 
-    def get_mining_result(self):
+    def get_mining_result(self) -> Optional[str]:
         """Get the item(s) that should be added to inventory when this block is mined"""
         mining_results = {
-            "wood": "wood",
-            "stone": "stone",
-            "coal": "coal",
-            "diamond": "diamond",
+            BlockType.WOOD: "wood",
+            BlockType.STONE: "stone",
+            BlockType.COAL: "coal",
+            BlockType.DIAMOND: "diamond",
         }
         return mining_results.get(self.type, None)
 
-    def get_replacement_block(self):
+    def get_replacement_block(self) -> BlockType:
         """Get the block type that should replace this block when mined"""
         replacements = {
-            "wood": "grass",  # Wood becomes grass when mined
-            "stone": "dirt",  # Stone becomes dirt when mined
-            "coal": "dirt",  # Coal becomes dirt when mined
-            "diamond": "dirt",  # Diamond becomes dirt when mined
+            BlockType.WOOD: BlockType.GRASS,  # Wood becomes grass when mined
+            BlockType.STONE: BlockType.DIRT,  # Stone becomes dirt when mined
+            BlockType.COAL: BlockType.DIRT,  # Coal becomes dirt when mined
+            BlockType.DIAMOND: BlockType.DIRT,  # Diamond becomes dirt when mined
         }
         return replacements.get(self.type, self.type)
 

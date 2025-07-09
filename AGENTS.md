@@ -33,8 +33,7 @@ Here’s where major game systems live in the codebase:
 - src/menu.py:        Game menus and UI navigation
 - src/player.py:	   Player movement, controls, and animation
 - src/sprites.py:	   Sprite loading and management
-- src/terrain.py:	   Procedural terrain generation (old, deprecated)
-- src/terrain_generator_v2.py:	Procedural terrain generation (Perlin noise based) - replaces src/terrain.py
+- src/terrain_generator_v2.py:	Procedural terrain generation (Perlin noise based)
 - src/terrain_config.py:	Configuration and parameters for terrain_generator_v2
 - src/world_manager.py:	World state management and chunk loading
 

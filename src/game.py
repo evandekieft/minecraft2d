@@ -1,6 +1,6 @@
 import pygame
 import math
-from terrain_generator_v2 import create_terrain_generator
+from terrain_generator import create_terrain_generator
 from block import Block
 from player import Player
 from camera import Camera
@@ -241,7 +241,9 @@ class Game:
     def _draw_inventory(self, screen):
         """Draw the player inventory"""
         # Draw black inventory background
-        inventory_rect = pygame.Rect(0, self.camera.game_height, self.camera.window_width, INVENTORY_HEIGHT)
+        inventory_rect = pygame.Rect(
+            0, self.camera.game_height, self.camera.window_width, INVENTORY_HEIGHT
+        )
         pygame.draw.rect(screen, BLACK, inventory_rect)
 
         # Get top 5 inventory items
@@ -380,31 +382,31 @@ class Game:
 
         # Update day cycle
         self.update_day_cycle(dt)
-    
+
     def handle_window_resize(self, new_width, new_height):
         """Handle window resize - update camera and potentially generate new chunks"""
         # Update camera with new screen dimensions
         self.camera.handle_window_resize(new_width, new_height)
-        
+
         # Update lighting system with new dimensions
         lighting_system.handle_window_resize(new_width, new_height, INVENTORY_HEIGHT)
-        
+
         # Force chunk generation around player to cover new visible area
         # This ensures we have terrain for the potentially larger visible area
         self._generate_chunks_around_player_extended()
-    
+
     def _generate_chunks_around_player_extended(self):
         """Generate chunks in a larger area around player for window resize"""
         # Calculate how many chunks we need based on current window size
         # Use the camera's visible bounds to determine required chunks
         left, right, top, bottom = self.camera.get_visible_bounds()
-        
+
         # Convert world bounds to chunk bounds
         chunk_left = left // self.chunk_size - 1  # Extra margin
         chunk_right = right // self.chunk_size + 1
         chunk_top = top // self.chunk_size - 1
         chunk_bottom = bottom // self.chunk_size + 1
-        
+
         # Generate any missing chunks in the visible area
         for cy in range(chunk_top, chunk_bottom + 1):
             for cx in range(chunk_left, chunk_right + 1):

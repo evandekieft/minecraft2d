@@ -13,7 +13,7 @@ Usage:
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-from src.terrain import TerrainGenerator
+from terrain_generator import ConfigurableTerrainGenerator, create_terrain_generator
 
 # Color mapping for visualization (RGB values)
 BLOCK_COLORS = {
@@ -34,7 +34,7 @@ def generate_terrain_map(width, height, seed=42, center_x=0, center_y=0):
     print(f"Generating {width}x{height} terrain map with seed {seed}...")
 
     # Initialize terrain generator
-    terrain_gen = TerrainGenerator(seed=seed)
+    terrain_gen: ConfigurableTerrainGenerator = create_terrain_generator(seed=seed)
 
     # Create arrays to store the map data
     terrain_map = np.zeros((height, width), dtype=object)
@@ -50,11 +50,7 @@ def generate_terrain_map(width, height, seed=42, center_x=0, center_y=0):
             # Generate block type
             block_type = terrain_gen.generate_block_type(world_x, world_y)
             terrain_map[y, x] = block_type
-
-            # Map to color
-            color_map[y, x] = BLOCK_COLORS.get(
-                block_type, (1.0, 0.0, 1.0)
-            )  # Magenta for unknown
+            color_map[y, x] = block_type.color
 
     return terrain_map, color_map
 
@@ -75,11 +71,8 @@ def calculate_terrain_stats(terrain_map):
     stats = {}
     for block_type, count in block_counts.items():
         percentage = (count / total_blocks) * 100
-        stats[block_type] = {
-            'count': count,
-            'percentage': percentage
-        }
-    
+        stats[block_type] = {"count": count, "percentage": percentage}
+
     return stats, total_blocks
 
 
@@ -92,30 +85,34 @@ def print_terrain_stats(terrain_map):
     print("-" * 50)
 
     # Sort by count (descending)
-    sorted_blocks = sorted(stats.items(), key=lambda x: x[1]['count'], reverse=True)
+    sorted_blocks = sorted(stats.items(), key=lambda x: x[1]["count"], reverse=True)
 
     for block_type, data in sorted_blocks:
-        print(f"{block_type:>8}: {data['count']:>6} blocks ({data['percentage']:5.1f}%)")
+        print(
+            f"{block_type:>8}: {data['count']:>6} blocks ({data['percentage']:5.1f}%)"
+        )
 
 
 def compare_to_target(terrain_map, target_distribution):
     """Compare actual terrain distribution to target distribution"""
     stats, total_blocks = calculate_terrain_stats(terrain_map)
-    
+
     print(f"\nTarget vs Actual Distribution:")
     print("-" * 50)
     print(f"{'Block Type':>8} | {'Target':>6} | {'Actual':>6} | {'Diff':>6}")
     print("-" * 50)
-    
+
     for block_type, target_pct in target_distribution.items():
-        actual_pct = stats.get(block_type, {'percentage': 0})['percentage']
+        actual_pct = stats.get(block_type, {"percentage": 0})["percentage"]
         diff = actual_pct - target_pct
-        print(f"{block_type:>8} | {target_pct:>5.1f}% | {actual_pct:>5.1f}% | {diff:>+5.1f}%")
-    
+        print(
+            f"{block_type:>8} | {target_pct:>5.1f}% | {actual_pct:>5.1f}% | {diff:>+5.1f}%"
+        )
+
     # Check for any block types not in target
     for block_type in stats:
         if block_type not in target_distribution:
-            actual_pct = stats[block_type]['percentage']
+            actual_pct = stats[block_type]["percentage"]
             print(f"{block_type:>8} | {'N/A':>6} | {actual_pct:>5.1f}% | {'N/A':>6}")
 
 
@@ -199,13 +196,13 @@ def main():
 
     # Define target distribution
     target_distribution = {
-        'grass': 35.0,
-        'water': 25.0,
-        'sand': 10.0,
-        'stone': 14.0,
-        'wood': 10.0,
-        'lava': 5.0,
-        'diamond': 1.0
+        "grass": 35.0,
+        "water": 25.0,
+        "sand": 10.0,
+        "stone": 14.0,
+        "wood": 10.0,
+        "lava": 5.0,
+        "diamond": 1.0,
     }
 
     # Generate terrain map
@@ -219,7 +216,7 @@ def main():
 
     # Print statistics
     print_terrain_stats(terrain_map)
-    
+
     # Compare to target if requested
     if args.compare_target:
         compare_to_target(terrain_map, target_distribution)

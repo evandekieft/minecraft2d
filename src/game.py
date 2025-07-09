@@ -32,7 +32,6 @@ class Game:
         # Game state management
         self.running = True
         self.game_state: GameState = GameState.MENU
-        self.current_world_name = None
         self.current_game_world = None  # The actual GameWorld instance for the world
 
     def run(self):
@@ -46,15 +45,6 @@ class Game:
 
     def quit(self):
         """Quit the game"""
-        # Save before quitting only if world has a name
-        if (
-            self.current_game_world
-            and self.current_world_name  # Only save if world has been named
-            and self.game_state == "playing"
-        ):
-            self.world_manager.save_world(
-                self.current_game_world, self.current_world_name
-            )
         self.running = False
         pygame.quit()
         sys.exit()
@@ -85,7 +75,6 @@ class Game:
                 if action_type == "load_world":
                     self.current_game_world = self.world_manager.load_world(data)
                     if self.current_game_world:
-                        self.current_world_name = data
                         self.game_state = GameState.PLAYING
                         self.menu_system.reset_to_main_menu()
                 elif action_type == "create_world":

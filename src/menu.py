@@ -28,6 +28,10 @@ class MenuSystem:
         # Create world input
         self.creating_world = False
         self.new_world_name = ""
+        
+        # Window dimensions (start with constants, update on resize)
+        self.window_width = WINDOW_SIZE[0]
+        self.window_height = WINDOW_SIZE[1]
 
     def ensure_saves_directory(self):
         """Create saves directory if it doesn't exist"""
@@ -156,12 +160,18 @@ class MenuSystem:
             self.draw_create_world_menu()
         elif self.current_menu == "pause":
             self.draw_pause_menu()
+    
+    def handle_window_resize(self, screen, new_width, new_height):
+        """Handle window resize for the menu system"""
+        self.screen = screen
+        self.window_width = new_width
+        self.window_height = new_height
 
     def draw_main_menu(self):
         """Draw the main menu"""
         # Title
         title_text = self.font_large.render("MINECRAFT 2D", True, WHITE)
-        title_rect = title_text.get_rect(center=(WINDOW_SIZE[0] // 2, 200))
+        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
         self.screen.blit(title_text, title_rect)
 
         # Menu options
@@ -171,14 +181,14 @@ class MenuSystem:
         for i, option in enumerate(options):
             color = (255, 255, 0) if i == self.selected_option else WHITE
             text = self.font_medium.render(option, True, color)
-            text_rect = text.get_rect(center=(WINDOW_SIZE[0] // 2, start_y + i * 60))
+            text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 60))
             self.screen.blit(text, text_rect)
 
     def draw_world_select_menu(self):
         """Draw the world selection menu"""
         # Title
         title_text = self.font_large.render("Select World", True, WHITE)
-        title_rect = title_text.get_rect(center=(WINDOW_SIZE[0] // 2, 100))
+        title_rect = title_text.get_rect(center=(self.window_width // 2, 100))
         self.screen.blit(title_text, title_rect)
 
         # World list
@@ -188,14 +198,14 @@ class MenuSystem:
         for i, world_name in enumerate(worlds):
             color = (255, 255, 0) if i == self.selected_option else WHITE
             text = self.font_medium.render(world_name, True, color)
-            text_rect = text.get_rect(center=(WINDOW_SIZE[0] // 2, start_y + i * 50))
+            text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 50))
             self.screen.blit(text, text_rect)
 
         # Create New World option
         create_color = (255, 255, 0) if len(worlds) == self.selected_option else WHITE
         create_text = self.font_medium.render("Create New World", True, create_color)
         create_rect = create_text.get_rect(
-            center=(WINDOW_SIZE[0] // 2, start_y + len(worlds) * 50)
+            center=(self.window_width // 2, start_y + len(worlds) * 50)
         )
         self.screen.blit(create_text, create_rect)
 
@@ -209,7 +219,7 @@ class MenuSystem:
         for i, instruction in enumerate(instructions):
             text = self.font_small.render(instruction, True, (128, 128, 128))
             text_rect = text.get_rect(
-                center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] - 120 + i * 30)
+                center=(self.window_width // 2, WINDOW_SIZE[1] - 120 + i * 30)
             )
             self.screen.blit(text, text_rect)
 
@@ -217,21 +227,21 @@ class MenuSystem:
         """Draw the create world menu"""
         # Title
         title_text = self.font_large.render("Create New World", True, WHITE)
-        title_rect = title_text.get_rect(center=(WINDOW_SIZE[0] // 2, 200))
+        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
         self.screen.blit(title_text, title_rect)
 
         # Prompt
         prompt_text = self.font_medium.render("Enter world name:", True, WHITE)
-        prompt_rect = prompt_text.get_rect(center=(WINDOW_SIZE[0] // 2, 300))
+        prompt_rect = prompt_text.get_rect(center=(self.window_width // 2, 300))
         self.screen.blit(prompt_text, prompt_rect)
 
         # Input box
-        input_box = pygame.Rect(WINDOW_SIZE[0] // 2 - 200, 350, 400, 50)
+        input_box = pygame.Rect(self.window_width // 2 - 200, 350, 400, 50)
         pygame.draw.rect(self.screen, WHITE, input_box, 2)
 
         # Input text
         input_text = self.font_medium.render(self.new_world_name, True, WHITE)
-        input_rect = input_text.get_rect(center=(WINDOW_SIZE[0] // 2, 375))
+        input_rect = input_text.get_rect(center=(self.window_width // 2, 375))
         self.screen.blit(input_text, input_rect)
 
         # Cursor
@@ -244,20 +254,20 @@ class MenuSystem:
 
         for i, instruction in enumerate(instructions):
             text = self.font_small.render(instruction, True, (128, 128, 128))
-            text_rect = text.get_rect(center=(WINDOW_SIZE[0] // 2, 450 + i * 30))
+            text_rect = text.get_rect(center=(self.window_width // 2, 450 + i * 30))
             self.screen.blit(text, text_rect)
 
     def draw_pause_menu(self):
         """Draw the pause menu"""
         # Semi-transparent overlay
-        overlay = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
+        overlay = pygame.Surface((self.window_width, self.window_height))
         overlay.set_alpha(128)
         overlay.fill(BLACK)
         self.screen.blit(overlay, (0, 0))
 
         # Title
         title_text = self.font_large.render("PAUSED", True, WHITE)
-        title_rect = title_text.get_rect(center=(WINDOW_SIZE[0] // 2, 200))
+        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
         self.screen.blit(title_text, title_rect)
 
         # Menu options
@@ -267,7 +277,7 @@ class MenuSystem:
         for i, option in enumerate(options):
             color = (255, 255, 0) if i == self.selected_option else WHITE
             text = self.font_medium.render(option, True, color)
-            text_rect = text.get_rect(center=(WINDOW_SIZE[0] // 2, start_y + i * 60))
+            text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 60))
             self.screen.blit(text, text_rect)
 
     def show_pause_menu(self):

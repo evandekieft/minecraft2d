@@ -6,11 +6,9 @@ from player import Player
 from camera import Camera
 from lighting import lighting_system
 from constants import (
-    WINDOW_SIZE,
     GRID_SIZE,
     BLACK,
     WHITE,
-    GAME_HEIGHT,
     INVENTORY_HEIGHT,
 )
 
@@ -150,8 +148,8 @@ class Game:
                 screen_x, screen_y = self.camera.world_to_screen(world_x, world_y)
                 # Only draw if on screen (within game area)
                 if (
-                    -GRID_SIZE < screen_x < WINDOW_SIZE[0]
-                    and -GRID_SIZE < screen_y < GAME_HEIGHT
+                    -GRID_SIZE < screen_x < self.camera.window_width
+                    and -GRID_SIZE < screen_y < self.camera.game_height
                 ):
                     block = self.get_block(world_x, world_y)
                     if block:
@@ -181,8 +179,8 @@ class Game:
 
         # Only draw if target is on screen
         if (
-            -GRID_SIZE < target_screen_x < WINDOW_SIZE[0]
-            and -GRID_SIZE < target_screen_y < GAME_HEIGHT
+            -GRID_SIZE < target_screen_x < self.camera.window_width
+            and -GRID_SIZE < target_screen_y < self.camera.game_height
         ):
             target_block = self.get_block(target_x, target_y)
             if target_block:  # Only show border if there's actually a block there
@@ -243,7 +241,7 @@ class Game:
     def _draw_inventory(self, screen):
         """Draw the player inventory"""
         # Draw black inventory background
-        inventory_rect = pygame.Rect(0, GAME_HEIGHT, WINDOW_SIZE[0], INVENTORY_HEIGHT)
+        inventory_rect = pygame.Rect(0, self.camera.game_height, self.camera.window_width, INVENTORY_HEIGHT)
         pygame.draw.rect(screen, BLACK, inventory_rect)
 
         # Get top 5 inventory items
@@ -253,8 +251,8 @@ class Game:
         slot_size = 50
         slot_spacing = 10
         total_width = 5 * slot_size + 4 * slot_spacing
-        start_x = (WINDOW_SIZE[0] - total_width) // 2
-        start_y = GAME_HEIGHT + (INVENTORY_HEIGHT - slot_size) // 2
+        start_x = (self.camera.window_width - total_width) // 2
+        start_y = self.camera.game_height + (INVENTORY_HEIGHT - slot_size) // 2
 
         # Draw 5 inventory slots
         for i in range(5):
@@ -296,8 +294,8 @@ class Game:
     def _draw_day_night_indicator(self, screen):
         """Draw a visual day/night indicator with sun/moon"""
         # Position for the indicator (right side of inventory area, vertically centered)
-        indicator_x = WINDOW_SIZE[0] - 120
-        indicator_y = GAME_HEIGHT + (INVENTORY_HEIGHT // 2)
+        indicator_x = self.camera.window_width - 120
+        indicator_y = self.camera.game_height + (INVENTORY_HEIGHT // 2)
         indicator_size = 25
 
         # Colors
@@ -382,3 +380,30 @@ class Game:
 
         # Update day cycle
         self.update_day_cycle(dt)
+    
+    def handle_window_resize(self, new_width, new_height):
+        """Handle window resize - update camera and potentially generate new chunks"""
+        # Update camera with new screen dimensions
+        self.camera.handle_window_resize(new_width, new_height)
+        
+        # Force chunk generation around player to cover new visible area
+        # This ensures we have terrain for the potentially larger visible area
+        self._generate_chunks_around_player_extended()
+    
+    def _generate_chunks_around_player_extended(self):
+        """Generate chunks in a larger area around player for window resize"""
+        # Calculate how many chunks we need based on current window size
+        # Use the camera's visible bounds to determine required chunks
+        left, right, top, bottom = self.camera.get_visible_bounds()
+        
+        # Convert world bounds to chunk bounds
+        chunk_left = left // self.chunk_size - 1  # Extra margin
+        chunk_right = right // self.chunk_size + 1
+        chunk_top = top // self.chunk_size - 1
+        chunk_bottom = bottom // self.chunk_size + 1
+        
+        # Generate any missing chunks in the visible area
+        for cy in range(chunk_top, chunk_bottom + 1):
+            for cx in range(chunk_left, chunk_right + 1):
+                if (cx, cy) not in self.chunks:
+                    self._generate_chunk(cx, cy)

@@ -1,6 +1,6 @@
 import pygame
 import sys
-from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE
+from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, VIDEORESIZE
 from constants import WINDOW_SIZE
 from menu import MenuSystem
 from world_manager import WorldManager
@@ -9,12 +9,11 @@ from world_manager import WorldManager
 pygame.init()
 
 
-# Set up the display
-screen = pygame.display.set_mode(WINDOW_SIZE)
-pygame.display.set_caption("Minecraft2D")
-
-
 def main():
+    # Set up the display (make it resizable)
+    screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
+    pygame.display.set_caption("Minecraft2D")
+    
     clock = pygame.time.Clock()
     menu_system = MenuSystem(screen)
     world_manager = WorldManager()
@@ -90,6 +89,25 @@ def main():
 
             elif event.type == KEYUP and game_state == "playing" and game:
                 game.player.handle_keyup(event.key, game)
+            
+            elif event.type == VIDEORESIZE:
+                # Handle window resize
+                new_width, new_height = event.w, event.h
+                
+                # Enforce minimum window size
+                min_width, min_height = 800, 600
+                new_width = max(new_width, min_width)
+                new_height = max(new_height, min_height)
+                
+                # Update screen
+                screen = pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
+                
+                # Update game components if game is active
+                if game and game_state in ["playing", "paused"]:
+                    game.handle_window_resize(new_width, new_height)
+                
+                # Update menu system
+                menu_system.handle_window_resize(screen, new_width, new_height)
 
         # Update and draw based on current state
         if game_state == "menu":

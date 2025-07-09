@@ -25,7 +25,9 @@ class TerrainGenerator:
         self.coal_density = 0.15  # Chance for coal on stone
         self.lava_density = 0.80  # Chance for lava in deep areas (5% target)
         self.diamond_density = 0.30  # Chance for diamond in deep areas (1% target)
-        self.lava_pool_threshold = 0.2  # Threshold for lava pool formation (lower = more pools)
+        self.lava_pool_threshold = (
+            0.2  # Threshold for lava pool formation (lower = more pools)
+        )
 
     def get_base_terrain(self, world_x, world_y):
         """Generate base terrain using multiple noise layers with better distribution"""
@@ -124,7 +126,7 @@ class TerrainGenerator:
         combined = 0.5 * large_scale + 0.3 * medium_scale + 0.2 * small_scale
         normalized = (combined + 1) / 2
 
-        # Stretch the distribution to use full [0,1] range  
+        # Stretch the distribution to use full [0,1] range
         min_expected = 0.35
         max_expected = 0.65
         stretched = (normalized - min_expected) / (max_expected - min_expected)

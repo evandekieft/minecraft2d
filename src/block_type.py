@@ -97,6 +97,7 @@ class BlockType(Enum):
             BlockType.WOOD: "assets/sprites/blocks/oak_log.png",
             BlockType.SAND: "assets/sprites/blocks/sand.png",
             BlockType.STONE: "assets/sprites/blocks/stone.png",
+            BlockType.COAL: "assets/sprites/blocks/coal_block.png",
         }
         sprite = sprites.get(self)
         return sprite_manager.load_sprite(sprite) if sprite else None

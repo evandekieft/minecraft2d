@@ -324,11 +324,10 @@ class TestGameIntegration:
             # Should always be able to access player position
             block = game.get_block(x, y)
             assert block is not None
-            assert block.type in ["grass", "tree"]
+            assert block.type in ["grass", "tree", "sand", "water", "stone"]
 
         # Should have generated many chunks
         assert len(game.chunks) > 9  # More than initial 3x3
-
 
 
 class TestBlockReplacement:

@@ -310,7 +310,9 @@ class TestGameWorldIntegration:
         for x, y in extreme_coords:
             block = game_world.get_block(x, y)
             assert block is not None
-            assert block.type in [BlockType.GRASS, BlockType.WOOD]
+            # Block should be a valid terrain type
+            valid_types = [BlockType.GRASS, BlockType.WOOD, BlockType.SAND, BlockType.STONE, BlockType.WATER, BlockType.COAL, BlockType.DIAMOND, BlockType.LAVA]
+            assert block.type in valid_types
 
     def test_multiple_chunk_generation_cycles(self):
         game_world = GameWorld()

@@ -29,10 +29,16 @@ class ConfigurableTerrainGenerator:
         """Generate base terrain noise value using configuration"""
         params = self.config.noise_params
 
+        # Add large offset to avoid boring area around origin
+        # This ensures the starting area has interesting terrain variation
+        # Use prime numbers to ensure we get into more interesting noise areas
+        offset_x = world_x + 10007.0
+        offset_y = world_y + 10009.0
+
         # Large-scale terrain features (continents, oceans)
         large_scale = noise.pnoise2(
-            world_x * params["large_scale"]["scale"],
-            world_y * params["large_scale"]["scale"],
+            offset_x * params["large_scale"]["scale"],
+            offset_y * params["large_scale"]["scale"],
             octaves=params["large_scale"]["octaves"],
             persistence=params["large_scale"]["persistence"],
             lacunarity=params["large_scale"]["lacunarity"],
@@ -41,8 +47,8 @@ class ConfigurableTerrainGenerator:
 
         # Medium-scale terrain features (biomes, regions)
         medium_scale = noise.pnoise2(
-            world_x * params["medium_scale"]["scale"],
-            world_y * params["medium_scale"]["scale"],
+            offset_x * params["medium_scale"]["scale"],
+            offset_y * params["medium_scale"]["scale"],
             octaves=params["medium_scale"]["octaves"],
             persistence=params["medium_scale"]["persistence"],
             lacunarity=params["medium_scale"]["lacunarity"],
@@ -51,8 +57,8 @@ class ConfigurableTerrainGenerator:
 
         # Small-scale height variation (local details)
         small_scale = noise.pnoise2(
-            world_x * params["small_scale"]["scale"],
-            world_y * params["small_scale"]["scale"],
+            offset_x * params["small_scale"]["scale"],
+            offset_y * params["small_scale"]["scale"],
             octaves=params["small_scale"]["octaves"],
             persistence=params["small_scale"]["persistence"],
             lacunarity=params["small_scale"]["lacunarity"],
@@ -96,9 +102,13 @@ class ConfigurableTerrainGenerator:
 
     def get_feature_noise(self, world_x, world_y):
         """Generate 2D feature placement noise"""
+        # Use same offset as base terrain for consistency
+        offset_x = world_x + 10007.0
+        offset_y = world_y + 10009.0
+
         return noise.pnoise2(
-            world_x * self.config.noise_params["feature_scale"],
-            world_y * self.config.noise_params["feature_scale"],
+            offset_x * self.config.noise_params["feature_scale"],
+            offset_y * self.config.noise_params["feature_scale"],
             octaves=3,
             persistence=0.6,
             lacunarity=2.0,
@@ -110,10 +120,14 @@ class ConfigurableTerrainGenerator:
         if not self.is_deep_underground(world_x, world_y):
             return False
 
+        # Use same offset as base terrain for consistency
+        offset_x = world_x + 10007.0
+        offset_y = world_y + 10009.0
+
         # Use different noise for lava pool formation
         lava_noise = noise.pnoise2(
-            world_x * self.config.noise_params["feature_scale"] * 0.5,
-            world_y * self.config.noise_params["feature_scale"] * 0.5,
+            offset_x * self.config.noise_params["feature_scale"] * 0.5,
+            offset_y * self.config.noise_params["feature_scale"] * 0.5,
             octaves=2,
             persistence=0.4,
             lacunarity=2.0,

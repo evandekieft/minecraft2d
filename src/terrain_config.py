@@ -39,11 +39,12 @@ class TerrainConfig:
 
     def __init__(self):
         # Base terrain layers (ordered by noise threshold)
+        # Adjusted thresholds based on actual noise distribution
         self.base_layers = [
-            TerrainLayer(BlockType.WATER, 0.25, 25.0, "Water in low-lying areas"),
-            TerrainLayer(BlockType.SAND, 0.35, 10.0, "Sand beaches around water"),
-            TerrainLayer(BlockType.GRASS, 0.70, 35.0, "Grass fields and plains"),
-            TerrainLayer(BlockType.STONE, 0.84, 14.0, "Stone mountains and hills"),
+            TerrainLayer(BlockType.WATER, 0.42, 25.0, "Water in low-lying areas"),
+            TerrainLayer(BlockType.SAND, 0.47, 10.0, "Sand beaches around water"),
+            TerrainLayer(BlockType.GRASS, 0.55, 35.0, "Grass fields and plains"),
+            TerrainLayer(BlockType.STONE, 0.60, 14.0, "Stone mountains and hills"),
         ]
 
         # Feature rules (processed in order)
@@ -107,8 +108,8 @@ class TerrainConfig:
                 "lacunarity": 2.0,
             },
             "feature_scale": 0.05,
-            "noise_stretch_min": 0.35,
-            "noise_stretch_max": 0.65,
+            "noise_stretch_min": 0.20,
+            "noise_stretch_max": 0.80,
             "stone_threshold": 0.84,  # Threshold for "deep underground"
             "lava_pool_threshold": 0.2,
         }

@@ -159,7 +159,7 @@ class TestGameWorldIntegration:
 
         # Ensure player is on walkable ground
         current_block = game_world.get_block(initial_x, initial_y)
-        if current_block and not current_block.walkable:
+        if current_block and not current_block.type.walkable:
             # If starting on unwalkable block, move to walkable one
             game_world.player.world_x = 0
             game_world.player.world_y = 0
@@ -173,7 +173,7 @@ class TestGameWorldIntegration:
                 test_x = game_world.player.world_x + dx
                 test_y = game_world.player.world_y + dy
                 test_block = game_world.get_block(test_x, test_y)
-                if test_block and test_block.walkable:
+                if test_block and test_block.type.walkable:
                     # Test movement to walkable block
                     game_world.player.move(dx, dy, game_world)
                     assert game_world.player.world_x == test_x
@@ -234,7 +234,7 @@ class TestGameWorldIntegration:
                 moves_tested += 1
                 game_world.player.move(dx, dy, game_world)
 
-                if block.walkable:
+                if block.type.walkable:
                     # Should have moved
                     assert game_world.player.world_x == target_x
                     assert game_world.player.world_y == target_y
@@ -406,6 +406,6 @@ class TestBlockReplacement:
             block = game_world.get_block(0, 0)
 
             assert (
-                block.walkable == expected_walkable
+                block.type.walkable == expected_walkable
             ), f"{block_type} walkable mismatch"
-            assert block.minable == expected_minable, f"{block_type} minable mismatch"
+            assert block.type.minable == expected_minable, f"{block_type} minable mismatch"

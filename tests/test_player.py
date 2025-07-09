@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 from pygame.locals import K_a, K_d, K_w, K_s
 from player import Player
-
+from block_type import BlockType
 
 
 class TestPlayer:
@@ -134,7 +134,7 @@ class TestPlayer:
 
         assert player.world_x == initial_x
         assert player.world_y == initial_y
-        
+
     def test_continuous_movement_timing(self):
         """Test that continuous movement respects timing constraints"""
         player = Player()
@@ -142,40 +142,40 @@ class TestPlayer:
         mock_block = Mock()
         mock_block.walkable = True
         mock_game.get_block.return_value = mock_block
-        
+
         player.orientation = "east"
         player.handle_keydown(K_d, mock_game)
-        
+
         # First update should not move (insufficient time)
         player.update(0.01, mock_game)
         assert player.world_x == 0
-        
+
         # Add more time to reach the move interval
         player.update(player.move_interval - 0.01, mock_game)
         assert player.world_x == 1
-        
+
     def test_movement_speed_configuration(self):
         """Test that movement speed is configurable"""
         player = Player()
         assert player.movement_speed == 6.0
-        assert player.move_interval == 1/6.0
-        
+        assert player.move_interval == 1 / 6.0
+
     def test_key_press_tracking(self):
         """Test that key presses are tracked correctly"""
         player = Player()
         mock_game = Mock()
-        
+
         # Initially no keys pressed
         assert len(player.pressed_keys) == 0
-        
+
         # Press a key
         player.handle_keydown(K_w, mock_game)
         assert K_w in player.pressed_keys
-        
+
         # Release the key
         player.handle_keyup(K_w, mock_game)
         assert K_w not in player.pressed_keys
-        
+
     def test_continuous_movement_while_held(self):
         """Test that movement continues while key is held"""
         player = Player()
@@ -183,18 +183,18 @@ class TestPlayer:
         mock_block = Mock()
         mock_block.walkable = True
         mock_game.get_block.return_value = mock_block
-        
+
         player.orientation = "east"
         player.handle_keydown(K_d, mock_game)  # Hold down D key
-        
+
         # Move multiple times while key is held
         for i in range(3):
             player.update(player.move_interval, mock_game)
             assert player.world_x == i + 1
-            
+
         # Release key
         player.handle_keyup(K_d, mock_game)
-        
+
         # Should not move anymore
         old_x = player.world_x
         player.update(player.move_interval, mock_game)
@@ -305,7 +305,7 @@ class TestMining:
         player = Player()
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.minable = True
+        mock_block.type.minable = True
         mock_game.get_block.return_value = mock_block
 
         player.start_mining(mock_game)
@@ -317,7 +317,7 @@ class TestMining:
         player = Player()
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.minable = False
+        mock_block.type.minable = False
         mock_game.get_block.return_value = mock_block
 
         player.start_mining(mock_game)
@@ -369,7 +369,7 @@ class TestMining:
 
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.minable = True
+        mock_block.type.minable = True
         mock_block.take_damage.return_value = False  # Block not destroyed
         mock_game.get_block.return_value = mock_block
 
@@ -384,17 +384,17 @@ class TestMining:
 
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.minable = True
+        mock_block.type.minable = True
         mock_block.take_damage.return_value = True  # Block destroyed
-        mock_block.get_mining_result.return_value = "wood"
-        mock_block.get_replacement_block.return_value = "dirt"
+        mock_block.type.mining_result = BlockType.WOOD
+        mock_block.type.replacement_block = BlockType.DIRT
         mock_game.get_block.return_value = mock_block
 
         player.process_mining(1.0, mock_game)
 
         mock_block.take_damage.assert_called_once_with(1.0)
-        assert player.inventory["wood"] == 1
-        mock_game.replace_block.assert_called_once_with(5, 10, "dirt")
+        assert player.inventory[BlockType.WOOD] == 1
+        mock_game.replace_block.assert_called_once_with(5, 10, BlockType.DIRT)
         assert player.is_mining is False
         assert player.mining_target is None
 
@@ -429,13 +429,13 @@ class TestMining:
 
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.get_mining_result.return_value = None
-        mock_block.get_replacement_block.return_value = "dirt"
+        mock_block.type.mining_result = None
+        mock_block.type.replacement_block = BlockType.DIRT
 
         player.complete_mining(mock_game, 5, 10, mock_block)
 
         assert player.inventory == {}
-        mock_game.replace_block.assert_called_once_with(5, 10, "dirt")
+        mock_game.replace_block.assert_called_once_with(5, 10, BlockType.DIRT)
         assert player.is_mining is False
 
     def test_move_stops_mining(self):
@@ -464,7 +464,7 @@ class TestMining:
 
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.minable = True
+        mock_block.type.minable = True
         mock_block.take_damage.return_value = False
         mock_game.get_block.return_value = mock_block
 

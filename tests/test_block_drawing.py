@@ -32,7 +32,7 @@ class TestBlockDrawing:
             mock_draw_rect.assert_called_once()
             args = mock_draw_rect.call_args[0]
             assert args[0] == self.screen  # screen
-            assert args[1] == block.color  # color
+            assert args[1] == block.type.color  # color
             # args[2] is the rect - check it has correct position and size
             rect = args[2]
             assert rect.x == screen_x
@@ -64,7 +64,7 @@ class TestBlockDrawing:
             # First call should be the main block
             first_call = mock_draw_rect.call_args_list[0][0]
             assert first_call[0] == self.screen
-            assert first_call[1] == block.color
+            assert first_call[1] == block.type.color
 
             # Second call should be progress bar background (gray)
             second_call = mock_draw_rect.call_args_list[1][0]
@@ -186,4 +186,5 @@ class TestBlockDrawing:
 
             # Check that the block is drawn with the correct color
             args = mock_draw_rect.call_args[0]
-            assert args[1] == expected_color
+            assert args[1] == block.type.color
+            assert block.type.color == expected_color

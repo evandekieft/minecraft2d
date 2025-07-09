@@ -122,7 +122,7 @@ class Player:
 
         # Check if target block is walkable
         target_block = game.get_block(new_x, new_y)
-        if target_block and target_block.walkable:
+        if target_block and target_block.type.walkable:
             self.world_x = new_x
             self.world_y = new_y
             # Stop mining if player moves
@@ -150,7 +150,7 @@ class Player:
         target_x, target_y = self.get_target_position()
         target_block = game.get_block(target_x, target_y)
 
-        if target_block and target_block.minable:
+        if target_block and target_block.type.minable:
             self.is_mining = True
             self.mining_target = (target_x, target_y)
 
@@ -173,7 +173,7 @@ class Player:
         target_x, target_y = self.mining_target
         target_block = game.get_block(target_x, target_y)
 
-        if not target_block or not target_block.minable:
+        if not target_block or not target_block.type.minable:
             self.stop_mining(game)
             return
 
@@ -188,12 +188,12 @@ class Player:
     def complete_mining(self, game, target_x, target_y, target_block):
         """Complete the mining process - add items to inventory and replace block"""
         # Add mined item to inventory
-        mining_result = target_block.get_mining_result()
+        mining_result = target_block.type.mining_result
         if mining_result:
             self.add_to_inventory(mining_result)
 
         # Replace the block
-        replacement_type = target_block.get_replacement_block()
+        replacement_type = target_block.type.replacement_block
         game.replace_block(target_x, target_y, replacement_type)
 
         # Stop mining and set flag to prevent immediate placement

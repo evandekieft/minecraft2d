@@ -1,4 +1,20 @@
 from enum import Enum
+from os import walk
+from typing import Optional
+from pygame import Color
+from constants import (
+    GREEN,
+    LIGHT_BROWN,
+    DARK_BROWN,
+    BLUE,
+    WHITE,
+    BRIGHT_BLUE,
+    RED,
+    BLACK,
+    SAND_COLOR,
+    GRAY,
+    GRID_SIZE,
+)
 
 
 class BlockType(Enum):
@@ -11,3 +27,65 @@ class BlockType(Enum):
     LAVA = "lava"
     DIAMOND = "diamond"
     WATER = "water"
+
+    @property
+    def mining_result(self) -> Optional["BlockType"]:
+        """The item(s) that should be added to inventory when this block is mined"""
+        return {
+            BlockType.WOOD: BlockType.WOOD,
+            BlockType.STONE: BlockType.STONE,
+            BlockType.COAL: BlockType.COAL,
+            BlockType.DIAMOND: BlockType.DIAMOND,
+        }.get(self, None)
+
+    @property
+    def replacement_block(self) -> Optional["BlockType"]:
+        """Get the block type that should replace this block when mined"""
+        replacements = {
+            BlockType.WOOD: BlockType.DIRT,
+            BlockType.STONE: BlockType.DIRT,
+            BlockType.COAL: BlockType.DIRT,
+            BlockType.DIAMOND: BlockType.DIRT,
+        }
+        return replacements.get(self, None)
+
+    @property
+    def walkable(self) -> bool:
+        walkable_blocks = {BlockType.GRASS, BlockType.DIRT, BlockType.SAND}
+        return self in walkable_blocks
+
+    @property
+    def color(self) -> Color:
+        colors = {
+            BlockType.GRASS: GREEN,
+            BlockType.DIRT: DARK_BROWN,
+            BlockType.SAND: SAND_COLOR,
+            BlockType.WOOD: LIGHT_BROWN,
+            BlockType.STONE: GRAY,
+            BlockType.COAL: BLACK,
+            BlockType.LAVA: RED,
+            BlockType.DIAMOND: BRIGHT_BLUE,
+            BlockType.WATER: BLUE,
+        }
+        return colors.get(self, WHITE)
+
+    @property
+    def minable(self) -> bool:
+        minable_blocks = {
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.DIAMOND,
+            BlockType.COAL,
+        }
+        return self in minable_blocks
+
+    @property
+    def mining_difficulty(self) -> float:
+        # Mining difficulty in health points (higher = takes longer)
+        difficulties = {
+            BlockType.WOOD: 1.5,  # 1.5 seconds with bare hands
+            BlockType.STONE: 5.0,  # 5 seconds with bare hands
+            BlockType.COAL: 4.0,  # 4 seconds with bare hands
+            BlockType.DIAMOND: 8.0,  # 8 seconds with bare hands (very hard)
+        }
+        return difficulties.get(self, 1.0)

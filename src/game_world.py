@@ -161,7 +161,7 @@ class GameWorld:
                             and self.player.mining_target == (world_x, world_y)
                         )
                         mining_progress = 0.0
-                        if is_being_mined and block.minable:
+                        if is_being_mined and block.type.minable:
                             mining_progress = 1.0 - (
                                 block.current_health / block.max_health
                             )

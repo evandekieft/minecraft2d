@@ -23,63 +23,63 @@ class TestBlock:
     def test_grass_block_properties(self):
         block = Block(BlockType.GRASS)
         assert block.type == BlockType.GRASS
-        assert block.walkable is True
-        assert block.color == GREEN
+        assert block.type.walkable is True
+        assert block.type.color == GREEN
 
     def test_dirt_block_properties(self):
         block = Block(BlockType.DIRT)
         assert block.type == BlockType.DIRT
-        assert block.walkable is True
-        assert block.color == DARK_BROWN
+        assert block.type.walkable is True
+        assert block.type.color == DARK_BROWN
 
     def test_water_block_properties(self):
         block = Block(BlockType.WATER)
         assert block.type == BlockType.WATER
-        assert block.walkable is False
-        assert block.color == BLUE
-        assert block.minable is False
+        assert block.type.walkable is False
+        assert block.type.color == BLUE
+        assert block.type.minable is False
 
     def test_sand_block_properties(self):
         block = Block(BlockType.SAND)
         assert block.type == BlockType.SAND
-        assert block.walkable is True
-        assert block.color == SAND_COLOR
-        assert block.minable is False
+        assert block.type.walkable is True
+        assert block.type.color == SAND_COLOR
+        assert block.type.minable is False
 
     def test_wood_block_properties(self):
         block = Block(BlockType.WOOD)
         assert block.type == BlockType.WOOD
-        assert block.walkable is False
-        assert block.color == LIGHT_BROWN
-        assert block.minable is True
+        assert block.type.walkable is False
+        assert block.type.color == LIGHT_BROWN
+        assert block.type.minable is True
 
     def test_stone_block_properties(self):
         block = Block(BlockType.STONE)
         assert block.type == BlockType.STONE
-        assert block.walkable is False
-        assert block.color == GRAY
-        assert block.minable is True
+        assert block.type.walkable is False
+        assert block.type.color == GRAY
+        assert block.type.minable is True
 
     def test_coal_block_properties(self):
         block = Block(BlockType.COAL)
         assert block.type == BlockType.COAL
-        assert block.walkable is False
-        assert block.color == BLACK
-        assert block.minable is True
+        assert block.type.walkable is False
+        assert block.type.color == BLACK
+        assert block.type.minable is True
 
     def test_lava_block_properties(self):
         block = Block(BlockType.LAVA)
         assert block.type == BlockType.LAVA
-        assert block.walkable is False
-        assert block.color == RED
-        assert block.minable is False
+        assert block.type.walkable is False
+        assert block.type.color == RED
+        assert block.type.minable is False
 
     def test_diamond_block_properties(self):
         block = Block(BlockType.DIAMOND)
         assert block.type == BlockType.DIAMOND
-        assert block.walkable is False
-        assert block.color == BRIGHT_BLUE
-        assert block.minable is True
+        assert block.type.walkable is False
+        assert block.type.color == BRIGHT_BLUE
+        assert block.type.minable is True
 
     def test_unknown_block_type(self):
         # This test should handle invalid enum values
@@ -102,7 +102,7 @@ class TestBlock:
     )
     def test_walkable_rules(self, block_type, expected_walkable):
         block = Block(block_type)
-        assert block.walkable is expected_walkable
+        assert block.type.walkable is expected_walkable
 
     @pytest.mark.parametrize(
         "block_type,expected_color",
@@ -120,67 +120,67 @@ class TestBlock:
     )
     def test_color_mapping(self, block_type, expected_color):
         block = Block(block_type)
-        assert block.color == expected_color
+        assert block.type.color == expected_color
 
     def test_place_block_success(self):
         player = Player()
         player.world_x = 5
         player.world_y = 10
         player.orientation = "north"
-        player.inventory = {"dirt": 2}
+        player.inventory = {BlockType.DIRT: 2}
         player.active_slot = 0
 
         mock_game = Mock()
         mock_block = Mock()
-        mock_block.walkable = True
+        mock_block.type.walkable = True
         mock_game.get_block.return_value = mock_block
 
         # Patch get_top_inventory_items to return the correct block type in slot 0
-        player.get_top_inventory_items = lambda count=5: [("dirt", 2)]
+        player.get_top_inventory_items = lambda count=5: [(BlockType.DIRT, 2)]
 
         player.place_block(mock_game)
 
         # Target position should be (5, 9) for north
-        mock_game.replace_block.assert_called_once_with(5, 9, "dirt")
-        assert player.inventory["dirt"] == 1
+        mock_game.replace_block.assert_called_once_with(5, 9, BlockType.DIRT)
+        assert player.inventory[BlockType.DIRT] == 1
 
 
 class TestBlockMining:
 
     def test_grass_block_not_minable(self):
         block = Block(BlockType.GRASS)
-        assert block.minable is False
-        assert block.mining_difficulty == 1.0
+        assert block.type.minable is False
+        assert block.type.mining_difficulty == 1.0
         assert block.max_health == 1.0
         assert block.current_health == 1.0
 
     def test_wood_block_mining_properties(self):
         block = Block(BlockType.WOOD)
         assert block.type == BlockType.WOOD
-        assert block.color == LIGHT_BROWN
-        assert block.minable is True
-        assert block.mining_difficulty == 1.5
+        assert block.type.color == LIGHT_BROWN
+        assert block.type.minable is True
+        assert block.type.mining_difficulty == 1.5
         assert block.max_health == 1.5
         assert block.current_health == 1.5
 
     def test_stone_block_mining_properties(self):
         block = Block(BlockType.STONE)
-        assert block.minable is True
-        assert block.mining_difficulty == 5.0
+        assert block.type.minable is True
+        assert block.type.mining_difficulty == 5.0
         assert block.max_health == 5.0
         assert block.current_health == 5.0
 
     def test_coal_block_mining_properties(self):
         block = Block(BlockType.COAL)
-        assert block.minable is True
-        assert block.mining_difficulty == 4.0
+        assert block.type.minable is True
+        assert block.type.mining_difficulty == 4.0
         assert block.max_health == 4.0
         assert block.current_health == 4.0
 
     def test_diamond_block_mining_properties(self):
         block = Block(BlockType.DIAMOND)
-        assert block.minable is True
-        assert block.mining_difficulty == 8.0
+        assert block.type.minable is True
+        assert block.type.mining_difficulty == 8.0
         assert block.max_health == 8.0
         assert block.current_health == 8.0
 
@@ -230,43 +230,43 @@ class TestBlockMining:
 
     def test_get_mining_result_wood(self):
         block = Block(BlockType.WOOD)
-        assert block.get_mining_result() == "wood"
+        assert block.type.mining_result == BlockType.WOOD
 
     def test_get_mining_result_stone(self):
         block = Block(BlockType.STONE)
-        assert block.get_mining_result() == "stone"
+        assert block.type.mining_result == BlockType.STONE
 
     def test_get_mining_result_coal(self):
         block = Block(BlockType.COAL)
-        assert block.get_mining_result() == "coal"
+        assert block.type.mining_result == BlockType.COAL
 
     def test_get_mining_result_diamond(self):
         block = Block(BlockType.DIAMOND)
-        assert block.get_mining_result() == "diamond"
+        assert block.type.mining_result == BlockType.DIAMOND
 
     def test_get_mining_result_non_minable(self):
         block = Block(BlockType.GRASS)
-        assert block.get_mining_result() is None
+        assert block.type.mining_result is None
 
     def test_get_replacement_block_wood(self):
         block = Block(BlockType.WOOD)
-        assert block.get_replacement_block() == BlockType.GRASS
+        assert block.type.replacement_block == BlockType.DIRT
 
     def test_get_replacement_block_stone(self):
         block = Block(BlockType.STONE)
-        assert block.get_replacement_block() == BlockType.DIRT
+        assert block.type.replacement_block == BlockType.DIRT
 
     def test_get_replacement_block_coal(self):
         block = Block(BlockType.COAL)
-        assert block.get_replacement_block() == BlockType.DIRT
+        assert block.type.replacement_block == BlockType.DIRT
 
     def test_get_replacement_block_diamond(self):
         block = Block(BlockType.DIAMOND)
-        assert block.get_replacement_block() == BlockType.DIRT
+        assert block.type.replacement_block == BlockType.DIRT
 
     def test_get_replacement_block_non_minable(self):
         block = Block(BlockType.GRASS)
-        assert block.get_replacement_block() == BlockType.GRASS
+        assert block.type.replacement_block is None
 
     @pytest.mark.parametrize(
         "block_type,expected_minable",
@@ -284,4 +284,4 @@ class TestBlockMining:
     )
     def test_minable_blocks(self, block_type, expected_minable):
         block = Block(block_type)
-        assert block.minable is expected_minable
+        assert block.type.minable is expected_minable

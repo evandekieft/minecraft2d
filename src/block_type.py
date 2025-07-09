@@ -96,6 +96,7 @@ class BlockType(Enum):
         sprites = {
             BlockType.WOOD: "assets/sprites/blocks/oak_log.png",
             BlockType.SAND: "assets/sprites/blocks/sand.png",
+            BlockType.STONE: "assets/sprites/blocks/stone.png",
         }
         sprite = sprites.get(self)
         return sprite_manager.load_sprite(sprite) if sprite else None

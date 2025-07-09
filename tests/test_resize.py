@@ -4,6 +4,7 @@ Tests for window resize functionality
 
 import pygame
 from src.game import Game
+from src.game_world import GameWorld
 from src.camera import Camera
 from src.menu import MenuSystem
 from src.lighting import lighting_system
@@ -62,31 +63,31 @@ class TestWindowResize:
         assert new_screen_y == (800 - 120) // 2  # New center Y (minus inventory)
 
     def test_game_resize_generates_new_chunks_if_needed(self, pygame_setup):
-        """Test that game resize generates new chunks for expanded view"""
-        game = Game(terrain_seed=42)
+        """Test that game world resize generates new chunks for expanded view"""
+        game_world = GameWorld(terrain_seed=42)
 
         # Count initial chunks
-        initial_chunk_count = len(game.chunks)
+        initial_chunk_count = len(game_world.chunks)
 
         # Resize to much larger window (should need more chunks)
-        game.handle_window_resize(3000, 2000)
+        game_world.handle_window_resize(3000, 2000)
 
         # Should have generated additional chunks
-        assert len(game.chunks) >= initial_chunk_count
+        assert len(game_world.chunks) >= initial_chunk_count
 
     def test_game_resize_preserves_existing_chunks(self, pygame_setup):
         """Test that existing chunks are preserved during resize"""
-        game = Game(terrain_seed=42)
+        game_world = GameWorld(terrain_seed=42)
 
         # Generate some chunks and get a specific block
-        test_block = game.get_block(10, 10)
+        test_block = game_world.get_block(10, 10)
         test_block_type = test_block.type
 
         # Resize window
-        game.handle_window_resize(1200, 800)
+        game_world.handle_window_resize(1200, 800)
 
         # Check that the same block still exists and is unchanged
-        preserved_block = game.get_block(10, 10)
+        preserved_block = game_world.get_block(10, 10)
         assert preserved_block.type == test_block_type
 
     def test_menu_system_resize_updates_dimensions(self, pygame_setup):
@@ -163,19 +164,19 @@ class TestResizeEdgeCases:
 
     def test_game_resize_with_negative_coordinates(self, pygame_setup):
         """Test that resize works correctly with negative world coordinates"""
-        game = Game(terrain_seed=42)
+        game_world = GameWorld(terrain_seed=42)
 
         # Move to negative coordinates
-        game.player.world_x = -50
-        game.player.world_y = -50
-        game.camera.x = -50
-        game.camera.y = -50
+        game_world.player.world_x = -50
+        game_world.player.world_y = -50
+        game_world.camera.x = -50
+        game_world.camera.y = -50
 
         # Test resize
-        game.handle_window_resize(1200, 800)
+        game_world.handle_window_resize(1200, 800)
 
         # Should still work and generate chunks in negative space
-        block = game.get_block(-55, -55)
+        block = game_world.get_block(-55, -55)
         assert block is not None
         assert block.type in [
             "water",
@@ -190,18 +191,18 @@ class TestResizeEdgeCases:
 
     def test_multiple_consecutive_resizes(self, pygame_setup):
         """Test multiple consecutive resizes"""
-        game = Game(terrain_seed=42)
+        game_world = GameWorld(terrain_seed=42)
 
         # Perform multiple resizes
         sizes = [(800, 600), (1200, 800), (1600, 1200), (1000, 700), (1400, 900)]
 
         for width, height in sizes:
-            game.handle_window_resize(width, height)
+            game_world.handle_window_resize(width, height)
 
             # Camera should be updated correctly
-            assert game.camera.window_width == width
-            assert game.camera.window_height == height
+            assert game_world.camera.window_width == width
+            assert game_world.camera.window_height == height
 
             # Should be able to get blocks without crashing
-            block = game.get_block(0, 0)
+            block = game_world.get_block(0, 0)
             assert block is not None

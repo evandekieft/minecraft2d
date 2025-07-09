@@ -1,6 +1,6 @@
 import json
 import os
-from game import Game
+from game_world import GameWorld
 from block import Block
 
 
@@ -59,7 +59,7 @@ class WorldManager:
             return False
 
     def load_world(self, world_name):
-        """Load a world from file and return a Game instance"""
+        """Load a world from file and return a GameWorld instance"""
         try:
             filepath = os.path.join(self.saves_dir, f"{world_name}.json")
 
@@ -69,9 +69,9 @@ class WorldManager:
             with open(filepath, "r") as f:
                 world_data = json.load(f)
 
-            # Create new game instance
+            # Create new game world instance
             terrain_seed = world_data.get("terrain_seed", 42)
-            game = Game(terrain_seed=terrain_seed)
+            game = GameWorld(terrain_seed=terrain_seed)
 
             # Restore player state
             player_data = world_data.get("player", {})
@@ -119,8 +119,8 @@ class WorldManager:
 
                 terrain_seed = random.randint(1, 1000000)
 
-            # Create new game instance
-            game = Game(terrain_seed=terrain_seed)
+            # Create new game world instance
+            game = GameWorld(terrain_seed=terrain_seed)
 
             # Save the initial world state
             if self.save_world(game, world_name):

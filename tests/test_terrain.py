@@ -1,10 +1,10 @@
 import random
-from game import Game
+from game_world import GameWorld
 
 
 class TestNoiseGeneration:
     def test_noise_based_generation(self):
-        game = Game()
+        game_world = GameWorld()
 
         # Sample blocks and verify they are valid terrain types
         valid_types = {
@@ -20,7 +20,7 @@ class TestNoiseGeneration:
         }
         for x in range(20):
             for y in range(20):
-                block = game.get_block(x, y)
+                block = game_world.get_block(x, y)
                 assert block.type in valid_types, f"Invalid block type: {block.type}"
 
     def test_block_generation_deterministic(self):
@@ -34,13 +34,13 @@ class TestNoiseGeneration:
         assert prob1 == prob2
 
     def test_different_coordinates_different_blocks(self):
-        game = Game()
+        game_world = GameWorld()
 
         # Get a sample of blocks
         blocks = []
         for x in range(10):
             for y in range(10):
-                block = game.get_block(x, y)
+                block = game_world.get_block(x, y)
                 blocks.append(block.type)
 
         # Should have both grass and wood blocks (not all the same)
@@ -48,7 +48,7 @@ class TestNoiseGeneration:
         assert len(unique_types) > 1
 
     def test_generated_blocks_are_valid_types(self):
-        game = Game()
+        game_world = GameWorld()
 
         # Test that generated blocks are valid terrain types
         valid_types = {
@@ -64,5 +64,5 @@ class TestNoiseGeneration:
         }
         for x in range(20):
             for y in range(20):
-                block = game.get_block(x, y)
+                block = game_world.get_block(x, y)
                 assert block.type in valid_types, f"Invalid block type: {block.type}"

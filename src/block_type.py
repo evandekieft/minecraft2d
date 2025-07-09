@@ -1,5 +1,4 @@
 from enum import Enum
-from os import walk
 from typing import Optional
 from pygame import Color
 from constants import (
@@ -13,7 +12,6 @@ from constants import (
     BLACK,
     SAND_COLOR,
     GRAY,
-    GRID_SIZE,
 )
 
 

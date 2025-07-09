@@ -2,6 +2,8 @@ from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
 from sprites import sprite_manager
 from inventory import Inventory
 from block_type import BlockType
+import pygame
+import os
 
 
 class Player:
@@ -19,7 +21,6 @@ class Player:
 
         # Sprites will be loaded after pygame display is initialized
         self.sprites = {}
-        self.has_sprites = False
 
         # Movement system
         self.movement_speed = 6.0  # blocks per second
@@ -210,16 +211,21 @@ class Player:
 
     def load_sprites_if_needed(self):
         """Load sprites if not already loaded (after pygame display is initialized)"""
-        if not self.has_sprites:
-            self.sprites = sprite_manager.load_player_sprites()
-            self.has_sprites = len(self.sprites) == 4
+        if not self.sprites:
+            base_path = "assets/sprites/player/"
+            directions = ["north", "south", "east", "west"]
 
-    def get_current_sprite(self):
+            for direction in directions:
+                filename = f"steve_{direction}.png"
+                filepath = os.path.join(base_path, filename)
+
+                sprite = sprite_manager.load_sprite(filepath)
+                self.sprites[direction] = sprite
+
+    def get_current_sprite(self) -> pygame.Surface:
         """Get the sprite for the current orientation, or None if using fallback color"""
         self.load_sprites_if_needed()
-        if self.has_sprites and self.orientation in self.sprites:
-            return self.sprites[self.orientation]
-        return None
+        return self.sprites[self.orientation]
 
     def set_active_slot(self, slot: int):
         self.inventory.set_active_slot(slot)

@@ -12,14 +12,20 @@ from pygame.locals import (
     K_DELETE,
 )
 from constants import WINDOW_SIZE, BLACK, WHITE, GAME_HEIGHT, INVENTORY_HEIGHT
+from enum import Enum
+
+
+class MenuOption(Enum):
+    MAIN = "main"
+    WORLD_SELECT = "world_select"
+    PAUSE = "pause"
+    SAVE_WORLD = "save_world"
 
 
 class MenuSystem:
     def __init__(self, screen):
         self.screen = screen
-        self.current_menu = (
-            "main"  # main, world_select, create_world, pause, save_world
-        )
+        self.current_menu: MenuOption = MenuOption.MAIN
         self.selected_option = 0
         self.font_large = pygame.font.Font(None, 72)
         self.font_medium = pygame.font.Font(None, 48)
@@ -68,15 +74,13 @@ class MenuSystem:
     def handle_event(self, event):
         """Handle menu events, returns action or None"""
         if event.type == KEYDOWN:
-            if self.current_menu == "main":
+            if self.current_menu == MenuOption.MAIN:
                 return self.handle_main_menu_input(event.key)
-            elif self.current_menu == "world_select":
+            elif self.current_menu == MenuOption.WORLD_SELECT:
                 return self.handle_world_select_input(event.key)
-            elif self.current_menu == "create_world":
-                return self.handle_create_world_input(event.key)
-            elif self.current_menu == "pause":
+            elif self.current_menu == MenuOption.PAUSE:
                 return self.handle_pause_menu_input(event.key)
-            elif self.current_menu == "save_world":
+            elif self.current_menu == MenuOption.SAVE_WORLD:
                 return self.handle_save_world_input(event.key)
         return None
 
@@ -88,7 +92,7 @@ class MenuSystem:
             self.selected_option = min(1, self.selected_option + 1)
         elif key == K_RETURN:
             if self.selected_option == 0:  # Play
-                self.current_menu = "world_select"
+                self.current_menu = MenuOption.WORLD_SELECT
                 self.selected_option = 0
             elif self.selected_option == 1:  # Quit
                 return "quit"
@@ -118,7 +122,7 @@ class MenuSystem:
                 if self.selected_option >= len(self.get_world_list()):
                     self.selected_option = max(0, len(self.get_world_list()) - 1)
         elif key == K_ESCAPE:
-            self.current_menu = "main"
+            self.current_menu = MenuOption.MAIN
             self.selected_option = 0
         return None
 
@@ -129,7 +133,7 @@ class MenuSystem:
             self.creating_world = False
             return ("create_world", world_name)
         elif key == K_ESCAPE:
-            self.current_menu = "world_select"
+            self.current_menu = MenuOption.WORLD_SELECT
             self.creating_world = False
             self.new_world_name = ""
             self.selected_option = 0
@@ -153,7 +157,7 @@ class MenuSystem:
                 return "resume"
             elif self.selected_option == 1:  # Save & Exit to Menu
                 # Switch to save world menu to get name
-                self.current_menu = "save_world"
+                self.current_menu = MenuOption.SAVE_WORLD
                 self.saving_world = True
                 self.save_world_name = ""
                 self.selected_option = 0
@@ -172,7 +176,7 @@ class MenuSystem:
             return ("save_and_exit", world_name)
         elif key == K_ESCAPE:
             # Return to pause menu
-            self.current_menu = "pause"
+            self.current_menu = MenuOption.PAUSE
             self.saving_world = False
             self.save_world_name = ""
             self.selected_option = 1
@@ -195,15 +199,13 @@ class MenuSystem:
         """Draw the current menu"""
         self.screen.fill(BLACK)
 
-        if self.current_menu == "main":
+        if self.current_menu == MenuOption.MAIN:
             self.draw_main_menu()
-        elif self.current_menu == "world_select":
+        elif self.current_menu == MenuOption.WORLD_SELECT:
             self.draw_world_select_menu()
-        elif self.current_menu == "create_world":
-            self.draw_create_world_menu()
-        elif self.current_menu == "pause":
+        elif self.current_menu == MenuOption.PAUSE:
             self.draw_pause_menu()
-        elif self.current_menu == "save_world":
+        elif self.current_menu == MenuOption.SAVE_WORLD:
             self.draw_save_world_menu()
 
     def handle_window_resize(self, screen, new_width, new_height):
@@ -274,40 +276,6 @@ class MenuSystem:
             )
             self.screen.blit(text, text_rect)
 
-    def draw_create_world_menu(self):
-        """Draw the create world menu"""
-        # Title
-        title_text = self.font_large.render("Create New World", True, WHITE)
-        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
-        self.screen.blit(title_text, title_rect)
-
-        # Prompt
-        prompt_text = self.font_medium.render("Enter world name:", True, WHITE)
-        prompt_rect = prompt_text.get_rect(center=(self.window_width // 2, 300))
-        self.screen.blit(prompt_text, prompt_rect)
-
-        # Input box
-        input_box = pygame.Rect(self.window_width // 2 - 200, 350, 400, 50)
-        pygame.draw.rect(self.screen, WHITE, input_box, 2)
-
-        # Input text
-        input_text = self.font_medium.render(self.new_world_name, True, WHITE)
-        input_rect = input_text.get_rect(center=(self.window_width // 2, 375))
-        self.screen.blit(input_text, input_rect)
-
-        # Cursor
-        if pygame.time.get_ticks() % 1000 < 500:  # Blinking cursor
-            cursor_x = input_rect.right + 5
-            pygame.draw.line(self.screen, WHITE, (cursor_x, 360), (cursor_x, 390), 2)
-
-        # Instructions
-        instructions = ["Press ENTER to create world", "Press ESC to cancel"]
-
-        for i, instruction in enumerate(instructions):
-            text = self.font_small.render(instruction, True, (128, 128, 128))
-            text_rect = text.get_rect(center=(self.window_width // 2, 450 + i * 30))
-            self.screen.blit(text, text_rect)
-
     def draw_pause_menu(self):
         """Draw the pause menu"""
         # Semi-transparent overlay
@@ -373,12 +341,12 @@ class MenuSystem:
 
     def show_pause_menu(self):
         """Show the pause menu"""
-        self.current_menu = "pause"
+        self.current_menu = MenuOption.PAUSE
         self.selected_option = 0
 
     def reset_to_main_menu(self):
         """Reset to main menu"""
-        self.current_menu = "main"
+        self.current_menu = MenuOption.MAIN
         self.selected_option = 0
         self.creating_world = False
         self.new_world_name = ""

@@ -1,6 +1,7 @@
 import pygame
 import os
 from constants import GRID_SIZE
+from typing import Dict
 
 
 class SpriteManager:
@@ -25,7 +26,7 @@ class SpriteManager:
         self.sprites[path] = scaled
         return scaled
 
-    def load_player_sprites(self):
+    def load_player_sprites(self) -> Dict[str, pygame.Surface]:
         """Load all player direction sprites"""
         base_path = "assets/sprites/player/"
 
@@ -37,16 +38,9 @@ class SpriteManager:
             filepath = os.path.join(base_path, filename)
 
             sprite = self.load_sprite(filepath)
-            if sprite:
-                player_sprites[direction] = sprite
-            else:
-                print(f"Warning: Could not load player sprite for {direction}")
+            player_sprites[direction] = sprite
 
         return player_sprites
-
-    def get_sprite_size(self):
-        """Get the size that sprites will be scaled to"""
-        return GRID_SIZE, GRID_SIZE
 
 
 # Global sprite manager instance

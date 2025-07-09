@@ -4,6 +4,13 @@ from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, VIDEORESIZE
 from menu import MenuSystem
 from world_manager import WorldManager
 from constants import WINDOW_SIZE
+from enum import Enum
+
+
+class GameState(Enum):
+    MENU = "menu"
+    PLAYING = "playing"
+    PAUSED = "paused"
 
 
 class Game:
@@ -18,13 +25,13 @@ class Game:
             self.screen = screen
 
         # Initialize game systems
-        self.menu_system = MenuSystem(self.screen)
-        self.world_manager = WorldManager()
+        self.menu_system: MenuSystem = MenuSystem(self.screen)
+        self.world_manager: WorldManager = WorldManager()
         self.clock = pygame.time.Clock()
 
         # Game state management
         self.running = True
-        self.game_state = "menu"  # "menu", "playing", "paused"
+        self.game_state: GameState = GameState.MENU
         self.current_world_name = None
         self.current_game_world = None  # The actual GameWorld instance for the world
 
@@ -69,7 +76,7 @@ class Game:
 
     def _handle_keydown(self, event):
         """Handle keydown events"""
-        if self.game_state == "menu":
+        if self.game_state == GameState.MENU:
             action = self.menu_system.handle_event(event)
             if action == "quit":
                 self.quit()
@@ -79,7 +86,7 @@ class Game:
                     self.current_game_world = self.world_manager.load_world(data)
                     if self.current_game_world:
                         self.current_world_name = data
-                        self.game_state = "playing"
+                        self.game_state = GameState.PLAYING
                         self.menu_system.reset_to_main_menu()
                 elif action_type == "create_world":
                     # Create world without saving it yet (no name)
@@ -88,39 +95,39 @@ class Game:
                     )
                     if self.current_game_world:
                         self.current_world_name = None  # No name yet
-                        self.game_state = "playing"
+                        self.game_state = GameState.PLAYING
                         self.menu_system.reset_to_main_menu()
 
-        elif self.game_state == "playing":
+        elif self.game_state == GameState.PLAYING:
             if event.key == K_ESCAPE:
                 self.menu_system.show_pause_menu()
-                self.game_state = "paused"
+                self.game_state = GameState.PAUSED
             elif self.current_game_world:
                 self.current_game_world.player.handle_keydown(
                     event.key, self.current_game_world
                 )
 
-        elif self.game_state == "paused":
+        elif self.game_state == GameState.PAUSED:
             action = self.menu_system.handle_event(event)
             if action == "resume":
-                self.game_state = "playing"
+                self.game_state = GameState.PLAYING
             elif isinstance(action, tuple) and action[0] == "save_and_exit":
                 # Save with the provided world name
                 world_name = action[1]
                 self.world_manager.save_world(self.current_game_world, world_name)
                 self.current_game_world = None
                 self.current_world_name = None
-                self.game_state = "menu"
+                self.game_state = GameState.MENU
                 self.menu_system.reset_to_main_menu()
             elif action == "exit_no_save":
                 self.current_game_world = None
                 self.current_world_name = None
-                self.game_state = "menu"
+                self.game_state = GameState.MENU
                 self.menu_system.reset_to_main_menu()
 
     def _handle_keyup(self, event):
         """Handle keyup events"""
-        if self.game_state == "playing" and self.current_game_world:
+        if self.game_state == GameState.PLAYING and self.current_game_world:
             self.current_game_world.player.handle_keyup(
                 event.key, self.current_game_world
             )
@@ -138,7 +145,10 @@ class Game:
         self.screen = pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
 
         # Update game components if game is active
-        if self.current_game_world and self.game_state in ["playing", "paused"]:
+        if self.current_game_world and self.game_state in [
+            GameState.PLAYING,
+            GameState.PAUSED,
+        ]:
             self.current_game_world.handle_window_resize(new_width, new_height)
 
         # Update menu system
@@ -146,16 +156,16 @@ class Game:
 
     def _update(self, dt):
         """Update game state"""
-        if self.game_state == "playing" and self.current_game_world:
+        if self.game_state == GameState.PLAYING and self.current_game_world:
             self.current_game_world.update_state(dt)
 
     def _render(self):
         """Render the game"""
-        if self.game_state == "menu":
+        if self.game_state == GameState.MENU:
             self.menu_system.draw()
-        elif self.game_state == "playing" and self.current_game_world:
+        elif self.game_state == GameState.PLAYING and self.current_game_world:
             self.current_game_world.draw(self.screen)
-        elif self.game_state == "paused":
+        elif self.game_state == GameState.PAUSED:
             # Draw game in background (frozen)
             if self.current_game_world:
                 self.current_game_world.draw(self.screen)

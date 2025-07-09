@@ -211,36 +211,13 @@ class GameWorld:
 
         # Try to use sprite first, fall back to colored rectangle
         player_sprite = self.player.get_current_sprite()
-        if player_sprite:
-            # Center the sprite in the grid cell
-            sprite_rect = player_sprite.get_rect()
-            sprite_rect.center = (
-                player_screen_x + GRID_SIZE // 2,
-                player_screen_y + GRID_SIZE // 2,
-            )
-            screen.blit(player_sprite, sprite_rect)
-        else:
-            # Fallback to colored rectangle with orientation arrow
-            player_rect = pygame.Rect(
-                player_screen_x + 2, player_screen_y + 2, GRID_SIZE - 4, GRID_SIZE - 4
-            )
-            pygame.draw.rect(screen, self.player.color, player_rect)
-
-            # Draw orientation indicator
-            center_x = player_screen_x + GRID_SIZE // 2
-            center_y = player_screen_y + GRID_SIZE // 2
-            arrow_length = 4
-
-            if self.player.orientation == "north":
-                end_x, end_y = center_x, center_y - arrow_length
-            elif self.player.orientation == "south":
-                end_x, end_y = center_x, center_y + arrow_length
-            elif self.player.orientation == "east":
-                end_x, end_y = center_x + arrow_length, center_y
-            elif self.player.orientation == "west":
-                end_x, end_y = center_x - arrow_length, center_y
-
-            pygame.draw.line(screen, WHITE, (center_x, center_y), (end_x, end_y), 2)
+        # Center the sprite in the grid cell
+        sprite_rect = player_sprite.get_rect()
+        sprite_rect.center = (
+            player_screen_x + GRID_SIZE // 2,
+            player_screen_y + GRID_SIZE // 2,
+        )
+        screen.blit(player_sprite, sprite_rect)
 
     def _draw_inventory(self, screen):
         """Draw the player inventory"""

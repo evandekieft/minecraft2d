@@ -17,7 +17,9 @@ from constants import WINDOW_SIZE, BLACK, WHITE, GAME_HEIGHT, INVENTORY_HEIGHT
 class MenuSystem:
     def __init__(self, screen):
         self.screen = screen
-        self.current_menu = "main"  # main, world_select, create_world, pause
+        self.current_menu = (
+            "main"  # main, world_select, create_world, pause, save_world
+        )
         self.selected_option = 0
         self.font_large = pygame.font.Font(None, 72)
         self.font_medium = pygame.font.Font(None, 48)
@@ -28,6 +30,10 @@ class MenuSystem:
         # Create world input
         self.creating_world = False
         self.new_world_name = ""
+
+        # Save world input
+        self.saving_world = False
+        self.save_world_name = ""
 
         # Window dimensions (start with constants, update on resize)
         self.window_width = WINDOW_SIZE[0]
@@ -70,6 +76,8 @@ class MenuSystem:
                 return self.handle_create_world_input(event.key)
             elif self.current_menu == "pause":
                 return self.handle_pause_menu_input(event.key)
+            elif self.current_menu == "save_world":
+                return self.handle_save_world_input(event.key)
         return None
 
     def handle_main_menu_input(self, key):
@@ -97,10 +105,8 @@ class MenuSystem:
             self.selected_option = min(max_options - 1, self.selected_option + 1)
         elif key == K_RETURN:
             if self.selected_option == len(worlds):  # Create New World
-                self.current_menu = "create_world"
-                self.creating_world = True
-                self.new_world_name = ""
-                self.selected_option = 0
+                # Directly create world without name prompt
+                return ("create_world", None)
             else:  # Load existing world
                 world_name = worlds[self.selected_option]
                 return ("load_world", world_name)
@@ -146,11 +152,37 @@ class MenuSystem:
             if self.selected_option == 0:  # Resume
                 return "resume"
             elif self.selected_option == 1:  # Save & Exit to Menu
-                return "save_and_exit"
+                # Switch to save world menu to get name
+                self.current_menu = "save_world"
+                self.saving_world = True
+                self.save_world_name = ""
+                self.selected_option = 0
+                return None
             elif self.selected_option == 2:  # Exit without Saving
                 return "exit_no_save"
         elif key == K_ESCAPE:
             return "resume"
+        return None
+
+    def handle_save_world_input(self, key):
+        """Handle save world name input"""
+        if key == K_RETURN and self.save_world_name.strip():
+            world_name = self.save_world_name.strip()
+            self.saving_world = False
+            return ("save_and_exit", world_name)
+        elif key == K_ESCAPE:
+            # Return to pause menu
+            self.current_menu = "pause"
+            self.saving_world = False
+            self.save_world_name = ""
+            self.selected_option = 1
+        else:
+            # Handle text input
+            if key == 8:  # Backspace
+                self.save_world_name = self.save_world_name[:-1]
+            elif 32 <= key <= 126:  # Printable characters
+                if len(self.save_world_name) < 20:  # Limit name length
+                    self.save_world_name += chr(key)
         return None
 
     def delete_world(self, world_name):
@@ -171,6 +203,8 @@ class MenuSystem:
             self.draw_create_world_menu()
         elif self.current_menu == "pause":
             self.draw_pause_menu()
+        elif self.current_menu == "save_world":
+            self.draw_save_world_menu()
 
     def handle_window_resize(self, screen, new_width, new_height):
         """Handle window resize for the menu system"""
@@ -297,6 +331,46 @@ class MenuSystem:
             text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 60))
             self.screen.blit(text, text_rect)
 
+    def draw_save_world_menu(self):
+        """Draw the save world menu"""
+        # Semi-transparent overlay
+        overlay = pygame.Surface((self.window_width, self.window_height))
+        overlay.set_alpha(128)
+        overlay.fill(BLACK)
+        self.screen.blit(overlay, (0, 0))
+
+        # Title
+        title_text = self.font_large.render("Save World", True, WHITE)
+        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
+        self.screen.blit(title_text, title_rect)
+
+        # Prompt
+        prompt_text = self.font_medium.render("Enter world name:", True, WHITE)
+        prompt_rect = prompt_text.get_rect(center=(self.window_width // 2, 300))
+        self.screen.blit(prompt_text, prompt_rect)
+
+        # Input box
+        input_box = pygame.Rect(self.window_width // 2 - 200, 350, 400, 50)
+        pygame.draw.rect(self.screen, WHITE, input_box, 2)
+
+        # Input text
+        input_text = self.font_medium.render(self.save_world_name, True, WHITE)
+        input_rect = input_text.get_rect(center=(self.window_width // 2, 375))
+        self.screen.blit(input_text, input_rect)
+
+        # Cursor
+        if pygame.time.get_ticks() % 1000 < 500:  # Blinking cursor
+            cursor_x = input_rect.right + 5
+            pygame.draw.line(self.screen, WHITE, (cursor_x, 360), (cursor_x, 390), 2)
+
+        # Instructions
+        instructions = ["Press ENTER to save world", "Press ESC to cancel"]
+
+        for i, instruction in enumerate(instructions):
+            text = self.font_small.render(instruction, True, (128, 128, 128))
+            text_rect = text.get_rect(center=(self.window_width // 2, 450 + i * 30))
+            self.screen.blit(text, text_rect)
+
     def show_pause_menu(self):
         """Show the pause menu"""
         self.current_menu = "pause"
@@ -308,3 +382,5 @@ class MenuSystem:
         self.selected_option = 0
         self.creating_world = False
         self.new_world_name = ""
+        self.saving_world = False
+        self.save_world_name = ""

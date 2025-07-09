@@ -1,6 +1,7 @@
 import json
 import os
 from game_world import GameWorld
+from inventory import Inventory
 from block import Block
 from block_type import BlockType
 
@@ -79,12 +80,9 @@ class WorldManager:
             game.player.world_x = player_data.get("world_x", 0)
             game.player.world_y = player_data.get("world_y", 0)
             game.player.orientation = player_data.get("orientation", "north")
-            game.player.inventory = player_data.get("inventory", {})
-            game.player.active_slot = player_data.get("active_slot", 0)
-
-            # Restore day/night cycle
-            if hasattr(game, "day_time"):
-                game.day_time = world_data.get("day_time", 300.0)
+            game.player.inventory = Inventory(
+                player_data.get("inventory", {}), player_data.get("active_slot", 0)
+            )
 
             # Clear auto-generated chunks and load saved ones
             game.chunks = {}
@@ -131,6 +129,22 @@ class WorldManager:
                 return game
             else:
                 return None
+
+        except Exception as e:
+            print(f"Error creating world: {e}")
+            return None
+
+    def create_new_world_unsaved(self, terrain_seed=None):
+        """Create a new world without saving it (no name yet)"""
+        try:
+            if terrain_seed is None:
+                import random
+
+                terrain_seed = random.randint(1, 1000000)
+
+            # Create new game world instance
+            game = GameWorld(terrain_seed=terrain_seed)
+            return game
 
         except Exception as e:
             print(f"Error creating world: {e}")

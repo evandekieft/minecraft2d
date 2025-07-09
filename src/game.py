@@ -39,10 +39,10 @@ class Game:
 
     def quit(self):
         """Quit the game"""
-        # Save before quitting if in game
+        # Save before quitting only if world has a name
         if (
             self.current_game_world
-            and self.current_world_name
+            and self.current_world_name  # Only save if world has been named
             and self.game_state == "playing"
         ):
             self.world_manager.save_world(
@@ -82,9 +82,12 @@ class Game:
                         self.game_state = "playing"
                         self.menu_system.reset_to_main_menu()
                 elif action_type == "create_world":
-                    self.current_game_world = self.world_manager.create_new_world(data)
+                    # Create world without saving it yet (no name)
+                    self.current_game_world = (
+                        self.world_manager.create_new_world_unsaved()
+                    )
                     if self.current_game_world:
-                        self.current_world_name = data
+                        self.current_world_name = None  # No name yet
                         self.game_state = "playing"
                         self.menu_system.reset_to_main_menu()
 
@@ -101,11 +104,10 @@ class Game:
             action = self.menu_system.handle_event(event)
             if action == "resume":
                 self.game_state = "playing"
-            elif action == "save_and_exit":
-                if self.current_world_name:
-                    self.world_manager.save_world(
-                        self.current_game_world, self.current_world_name
-                    )
+            elif isinstance(action, tuple) and action[0] == "save_and_exit":
+                # Save with the provided world name
+                world_name = action[1]
+                self.world_manager.save_world(self.current_game_world, world_name)
                 self.current_game_world = None
                 self.current_world_name = None
                 self.game_state = "menu"

@@ -94,9 +94,9 @@ class TestEventHandling:
         screen = pygame.Surface((800, 600))
         game = Game(screen=screen)
         
-        # Mock menu system returning create world action
-        game.menu_system.handle_event = Mock(return_value=("create_world", "test_world"))
-        game.world_manager.create_new_world = Mock(return_value=Mock())
+        # Mock menu system returning create world action with no name
+        game.menu_system.handle_event = Mock(return_value=("create_world", None))
+        game.world_manager.create_new_world_unsaved = Mock(return_value=Mock())
         
         keydown_event = Mock()
         keydown_event.key = pygame.K_RETURN
@@ -104,7 +104,7 @@ class TestEventHandling:
         game._handle_keydown(keydown_event)
         
         assert game.game_state == "playing"
-        assert game.current_world_name == "test_world"
+        assert game.current_world_name is None  # No name until saved
         assert game.current_game_world is not None
     
     def test_handle_keydown_load_world(self, pygame_setup):
@@ -178,10 +178,10 @@ class TestEventHandling:
         game = Game(screen=screen)
         game.game_state = "paused"
         game.current_game_world = Mock()
-        game.current_world_name = "test_world"
+        game.current_world_name = None  # No name yet for new worlds
         
-        # Mock menu system returning save and exit action
-        game.menu_system.handle_event = Mock(return_value="save_and_exit")
+        # Mock menu system returning save and exit action with world name
+        game.menu_system.handle_event = Mock(return_value=("save_and_exit", "test_world"))
         game.world_manager.save_world = Mock()
         
         keydown_event = Mock()

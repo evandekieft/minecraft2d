@@ -93,6 +93,9 @@ class BlockType(Enum):
 
     @property
     def sprite(self) -> Optional[pygame.Surface]:
-        sprites = {BlockType.WOOD: "assets/sprites/blocks/oak_log.png"}
+        sprites = {
+            BlockType.WOOD: "assets/sprites/blocks/oak_log.png",
+            BlockType.SAND: "assets/sprites/blocks/sand.png",
+        }
         sprite = sprites.get(self)
         return sprite_manager.load_sprite(sprite) if sprite else None

@@ -13,46 +13,48 @@ class TerrainGenerator:
         self.feature_scale = 0.05  # Scale for feature placement noise
         self.height_scale = 0.008  # Scale for height variation
 
-        # Terrain thresholds for base layer (adjusted to actual noise range)
-        self.water_threshold = 0.30  # Water in low areas
-        self.sand_threshold = 0.40  # Sand around water
-        self.grass_threshold = 0.60  # Most common terrain
-        self.stone_threshold = 0.75  # Stone in higher areas
+        # Terrain thresholds for base layer (adjusted for 2D noise distribution)
+        self.water_threshold = 0.25  # Water in low areas (25% target)
+        self.sand_threshold = 0.35  # Sand around water (10% target)
+        self.grass_threshold = 0.70  # Most common terrain (35% target)
+        self.stone_threshold = 0.84  # Stone in higher areas (14% target)
         self.deep_stone_threshold = 1.0  # Deep stone in highest areas
 
-        # Feature placement parameters
-        self.wood_density = 0.08  # Chance for wood on grass/dirt
+        # Feature placement parameters (adjusted for target distribution)
+        self.wood_density = 0.75  # Chance for wood on grass/dirt (10% target)
         self.coal_density = 0.15  # Chance for coal on stone
-        self.lava_density = 0.08  # Chance for lava in deep areas
-        self.diamond_density = 0.03  # Chance for diamond in deep areas (rarer)
-        self.lava_pool_threshold = 0.5  # Threshold for lava pool formation
+        self.lava_density = 0.80  # Chance for lava in deep areas (5% target)
+        self.diamond_density = 0.30  # Chance for diamond in deep areas (1% target)
+        self.lava_pool_threshold = 0.2  # Threshold for lava pool formation (lower = more pools)
 
     def get_base_terrain(self, world_x, world_y):
         """Generate base terrain using multiple noise layers with better distribution"""
         # Use a combination of different frequencies for more variety
 
-        # Large-scale terrain features
-        large_scale = noise.pnoise1(
-            world_x * 0.005,  # Very large features
-            octaves=2,
+        # Large-scale terrain features (continents, oceans)
+        large_scale = noise.pnoise2(
+            world_x * 0.002,  # Very large features
+            world_y * 0.002,  # Equal scaling for round features
+            octaves=3,
             persistence=0.5,
             lacunarity=2.0,
             base=self.seed,
         )
 
-        # Medium-scale terrain features
-        medium_scale = noise.pnoise1(
-            world_x * 0.02,
-            octaves=3,
+        # Medium-scale terrain features (biomes, regions)
+        medium_scale = noise.pnoise2(
+            world_x * 0.01,
+            world_y * 0.01,  # Equal scaling for organic shapes
+            octaves=4,
             persistence=0.6,
             lacunarity=2.0,
             base=self.seed + 100,
         )
 
-        # Small-scale height variation
+        # Small-scale height variation (local details)
         small_scale = noise.pnoise2(
-            world_x * 0.1,
-            world_y * 0.05,
+            world_x * 0.05,
+            world_y * 0.05,  # Equal scaling for natural variation
             octaves=2,
             persistence=0.3,
             lacunarity=2.0,
@@ -62,14 +64,20 @@ class TerrainGenerator:
         # Weighted combination
         combined = 0.5 * large_scale + 0.3 * medium_scale + 0.2 * small_scale
 
-        # Normalize and enhance distribution
+        # Normalize to [0,1] range
         normalized = (combined + 1) / 2
 
-        # Apply contrast curve to ensure full range usage
-        # This S-curve helps spread the values more evenly
-        x = normalized
-        enhanced = 6 * x**5 - 15 * x**4 + 10 * x**3  # Smooth step function
-        enhanced = max(0, min(1, enhanced))  # Clamp to [0,1]
+        # Stretch the distribution to use full [0,1] range
+        # 2D noise has different distribution than 1D noise
+        # Adjust for better spread
+        min_expected = 0.35
+        max_expected = 0.65
+        stretched = (normalized - min_expected) / (max_expected - min_expected)
+        enhanced = max(0, min(1, stretched))  # Clamp to [0,1]
+
+        # Debug: uncomment to see noise value distribution
+        # if world_x % 50 == 0 and world_y % 50 == 0:
+        #     print(f"Debug: combined={combined:.3f}, normalized={normalized:.3f}, enhanced={enhanced:.3f}")
 
         # Determine base terrain type
         if enhanced < self.water_threshold:
@@ -86,20 +94,26 @@ class TerrainGenerator:
     def is_deep_underground(self, world_x, world_y):
         """Check if location is in deep underground area"""
         # Use the same logic as get_base_terrain for consistency
-        large_scale = noise.pnoise1(
-            world_x * 0.005, octaves=2, persistence=0.5, lacunarity=2.0, base=self.seed
+        large_scale = noise.pnoise2(
+            world_x * 0.002,
+            world_y * 0.002,
+            octaves=3,
+            persistence=0.5,
+            lacunarity=2.0,
+            base=self.seed,
         )
 
-        medium_scale = noise.pnoise1(
-            world_x * 0.02,
-            octaves=3,
+        medium_scale = noise.pnoise2(
+            world_x * 0.01,
+            world_y * 0.01,
+            octaves=4,
             persistence=0.6,
             lacunarity=2.0,
             base=self.seed + 100,
         )
 
         small_scale = noise.pnoise2(
-            world_x * 0.1,
+            world_x * 0.05,
             world_y * 0.05,
             octaves=2,
             persistence=0.3,
@@ -110,9 +124,11 @@ class TerrainGenerator:
         combined = 0.5 * large_scale + 0.3 * medium_scale + 0.2 * small_scale
         normalized = (combined + 1) / 2
 
-        x = normalized
-        enhanced = 6 * x**5 - 15 * x**4 + 10 * x**3
-        enhanced = max(0, min(1, enhanced))
+        # Stretch the distribution to use full [0,1] range  
+        min_expected = 0.35
+        max_expected = 0.65
+        stretched = (normalized - min_expected) / (max_expected - min_expected)
+        enhanced = max(0, min(1, stretched))  # Clamp to [0,1]
 
         return enhanced >= self.stone_threshold
 

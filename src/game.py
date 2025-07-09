@@ -1,6 +1,6 @@
 import pygame
 import math
-from terrain import TerrainGenerator
+from terrain_generator_v2 import create_terrain_generator
 from block import Block
 from player import Player
 from camera import Camera
@@ -23,7 +23,7 @@ class Game:
         self.chunk_size = 16  # Size of each chunk in blocks
 
         # Initialize terrain generator
-        self.terrain_generator = TerrainGenerator(seed=terrain_seed)
+        self.terrain_generator = create_terrain_generator(seed=terrain_seed)
 
         # Day/night cycle settings
         self.day_duration = 120.0  # 2 minutes for day (in seconds)

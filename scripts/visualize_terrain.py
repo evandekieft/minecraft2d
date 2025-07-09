@@ -13,7 +13,7 @@ Usage:
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-from world import TerrainGenerator
+from src.terrain import TerrainGenerator
 
 # Color mapping for visualization (RGB values)
 BLOCK_COLORS = {
@@ -59,13 +59,10 @@ def generate_terrain_map(width, height, seed=42, center_x=0, center_y=0):
     return terrain_map, color_map
 
 
-def print_terrain_stats(terrain_map):
-    """Print statistics about the generated terrain"""
+def calculate_terrain_stats(terrain_map):
+    """Calculate statistics about the generated terrain"""
     height, width = terrain_map.shape
     total_blocks = height * width
-
-    print(f"\nTerrain Statistics ({width}x{height} = {total_blocks} blocks):")
-    print("-" * 50)
 
     # Count block types
     block_counts = {}
@@ -74,12 +71,52 @@ def print_terrain_stats(terrain_map):
             block_type = terrain_map[y, x]
             block_counts[block_type] = block_counts.get(block_type, 0) + 1
 
-    # Sort by count (descending)
-    sorted_blocks = sorted(block_counts.items(), key=lambda x: x[1], reverse=True)
-
-    for block_type, count in sorted_blocks:
+    # Calculate percentages and create results dictionary
+    stats = {}
+    for block_type, count in block_counts.items():
         percentage = (count / total_blocks) * 100
-        print(f"{block_type:>8}: {count:>6} blocks ({percentage:5.1f}%)")
+        stats[block_type] = {
+            'count': count,
+            'percentage': percentage
+        }
+    
+    return stats, total_blocks
+
+
+def print_terrain_stats(terrain_map):
+    """Print statistics about the generated terrain"""
+    height, width = terrain_map.shape
+    stats, total_blocks = calculate_terrain_stats(terrain_map)
+
+    print(f"\nTerrain Statistics ({width}x{height} = {total_blocks} blocks):")
+    print("-" * 50)
+
+    # Sort by count (descending)
+    sorted_blocks = sorted(stats.items(), key=lambda x: x[1]['count'], reverse=True)
+
+    for block_type, data in sorted_blocks:
+        print(f"{block_type:>8}: {data['count']:>6} blocks ({data['percentage']:5.1f}%)")
+
+
+def compare_to_target(terrain_map, target_distribution):
+    """Compare actual terrain distribution to target distribution"""
+    stats, total_blocks = calculate_terrain_stats(terrain_map)
+    
+    print(f"\nTarget vs Actual Distribution:")
+    print("-" * 50)
+    print(f"{'Block Type':>8} | {'Target':>6} | {'Actual':>6} | {'Diff':>6}")
+    print("-" * 50)
+    
+    for block_type, target_pct in target_distribution.items():
+        actual_pct = stats.get(block_type, {'percentage': 0})['percentage']
+        diff = actual_pct - target_pct
+        print(f"{block_type:>8} | {target_pct:>5.1f}% | {actual_pct:>5.1f}% | {diff:>+5.1f}%")
+    
+    # Check for any block types not in target
+    for block_type in stats:
+        if block_type not in target_distribution:
+            actual_pct = stats[block_type]['percentage']
+            print(f"{block_type:>8} | {'N/A':>6} | {actual_pct:>5.1f}% | {'N/A':>6}")
 
 
 def visualize_terrain(terrain_map, color_map, title="Terrain Map", save_path=None):
@@ -152,8 +189,24 @@ def main():
         action="store_true",
         help="Don't display the map (useful with --save)",
     )
+    parser.add_argument(
+        "--compare-target",
+        action="store_true",
+        help="Compare actual distribution to target distribution",
+    )
 
     args = parser.parse_args()
+
+    # Define target distribution
+    target_distribution = {
+        'grass': 35.0,
+        'water': 25.0,
+        'sand': 10.0,
+        'stone': 14.0,
+        'wood': 10.0,
+        'lava': 5.0,
+        'diamond': 1.0
+    }
 
     # Generate terrain map
     terrain_map, color_map = generate_terrain_map(
@@ -166,6 +219,10 @@ def main():
 
     # Print statistics
     print_terrain_stats(terrain_map)
+    
+    # Compare to target if requested
+    if args.compare_target:
+        compare_to_target(terrain_map, target_distribution)
 
     # Create visualization
     title = f"Terrain Map (Seed: {args.seed}, Size: {args.width}x{args.height})"

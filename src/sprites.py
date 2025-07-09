@@ -6,39 +6,24 @@ from constants import GRID_SIZE
 class SpriteManager:
     def __init__(self):
         self.sprites = {}
-        self.scale_factor = (
-            GRID_SIZE // 8
-        )  # Scale 8x8 to match grid size (16x16 default)
 
-    def load_sprite(self, path, scale_factor=None):
+    def load_sprite(
+        self, path, target_width=GRID_SIZE, target_height=GRID_SIZE
+    ) -> pygame.Surface:
         """Load a sprite and scale it cleanly (no smoothing for pixel art)"""
-        if scale_factor is None:
-            scale_factor = self.scale_factor
 
         if path in self.sprites:
             return self.sprites[path]
 
-        try:
-            # Load the original sprite
-            original = pygame.image.load(path).convert_alpha()
+        # Load the original sprite
+        original = pygame.image.load(path).convert_alpha()
 
-            # Get original dimensions
-            orig_width, orig_height = original.get_size()
+        # Scale without smoothing to preserve pixel art
+        scaled = pygame.transform.scale(original, (target_width, target_height))
 
-            # Calculate new dimensions
-            new_width = orig_width * scale_factor
-            new_height = orig_height * scale_factor
-
-            # Scale without smoothing to preserve pixel art
-            scaled = pygame.transform.scale(original, (new_width, new_height))
-
-            # Cache the sprite
-            self.sprites[path] = scaled
-            return scaled
-
-        except pygame.error as e:
-            print(f"Could not load sprite {path}: {e}")
-            return None
+        # Cache the sprite
+        self.sprites[path] = scaled
+        return scaled
 
     def load_player_sprites(self):
         """Load all player direction sprites"""

@@ -14,9 +14,19 @@ def draw_block(
 ):
     """Draw a given block type at the given screen coordinates with given size"""
     rect = pygame.Rect(screen_x, screen_y, size, size)
+    sprite = block_type.sprite
 
-    # Draw the main block
-    pygame.draw.rect(screen, block_type.color, rect)
+    if sprite:
+        # Center the sprite in the grid cell
+        sprite_rect = sprite.get_rect()
+        sprite_rect.center = (
+            screen_x + GRID_SIZE // 2,
+            screen_y + GRID_SIZE // 2,
+        )
+        screen.blit(sprite, sprite_rect)
+    else:
+        # Use solid block color if no configured sprite
+        pygame.draw.rect(screen, block_type.color, rect)
 
     # Draw mining progress bar if being mined
     if is_being_mined and mining_progress > 0:

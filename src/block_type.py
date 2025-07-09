@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
-from pygame import Color
+import pygame
+from sprites import sprite_manager
 from constants import (
     GREEN,
     LIGHT_BROWN,
@@ -55,7 +56,7 @@ class BlockType(Enum):
         return self in walkable_blocks
 
     @property
-    def color(self) -> Color:
+    def color(self) -> pygame.Color:
         colors = {
             BlockType.GRASS: GREEN,
             BlockType.DIRT: DARK_BROWN,
@@ -89,3 +90,9 @@ class BlockType(Enum):
             BlockType.DIAMOND: 8.0,  # 8 seconds with bare hands (very hard)
         }
         return difficulties.get(self, 1.0)
+
+    @property
+    def sprite(self) -> Optional[pygame.Surface]:
+        sprites = {BlockType.WOOD: "assets/sprites/blocks/oak_log.png"}
+        sprite = sprites.get(self)
+        return sprite_manager.load_sprite(sprite) if sprite else None

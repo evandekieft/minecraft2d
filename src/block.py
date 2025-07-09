@@ -1,8 +1,4 @@
 import pygame
-from constants import (
-    WHITE,
-    GRID_SIZE,
-)
 from block_type import BlockType
 from block_drawing import draw_block
 

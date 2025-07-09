@@ -1,5 +1,4 @@
 from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
-from constants import BLUE
 from sprites import sprite_manager
 from inventory import Inventory
 from block_type import BlockType
@@ -9,7 +8,6 @@ class Player:
     def __init__(self):
         self.world_x = 0
         self.world_y = 0
-        self.color = BLUE  # Fallback color if sprites fail to load
         self.orientation = "north"  # north, south, east, west
         self.inventory: Inventory = Inventory()
         self.is_mining = False

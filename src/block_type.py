@@ -3,10 +3,10 @@ from typing import Optional
 import pygame
 from sprites import sprite_manager
 from constants import (
-    GREEN,
+    GRASS_GREEN,
     LIGHT_BROWN,
     DARK_BROWN,
-    BLUE,
+    WATER_BLUE,
     WHITE,
     BRIGHT_BLUE,
     RED,
@@ -58,7 +58,7 @@ class BlockType(Enum):
     @property
     def color(self) -> pygame.Color:
         colors = {
-            BlockType.GRASS: GREEN,
+            BlockType.GRASS: GRASS_GREEN,
             BlockType.DIRT: DARK_BROWN,
             BlockType.SAND: SAND_COLOR,
             BlockType.WOOD: LIGHT_BROWN,
@@ -66,7 +66,7 @@ class BlockType(Enum):
             BlockType.COAL: BLACK,
             BlockType.LAVA: RED,
             BlockType.DIAMOND: BRIGHT_BLUE,
-            BlockType.WATER: BLUE,
+            BlockType.WATER: WATER_BLUE,
         }
         return colors.get(self, WHITE)
 

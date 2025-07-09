@@ -1,21 +1,19 @@
 import pytest
-import pygame
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from block import Block
 from block_type import BlockType
 from player import Player
+from inventory import Inventory
 from constants import (
     GREEN,
     LIGHT_BROWN,
     DARK_BROWN,
     BLUE,
-    WHITE,
     BRIGHT_BLUE,
     RED,
     BLACK,
     SAND_COLOR,
     GRAY,
-    GRID_SIZE,
 )
 
 
@@ -127,8 +125,7 @@ class TestBlock:
         player.world_x = 5
         player.world_y = 10
         player.orientation = "north"
-        player.inventory = {BlockType.DIRT: 2}
-        player.active_slot = 0
+        player.inventory = Inventory({BlockType.DIRT: 2})
 
         mock_game = Mock()
         mock_block = Mock()
@@ -142,7 +139,7 @@ class TestBlock:
 
         # Target position should be (5, 9) for north
         mock_game.replace_block.assert_called_once_with(5, 9, BlockType.DIRT)
-        assert player.inventory[BlockType.DIRT] == 1
+        assert player.inventory.inventory[BlockType.DIRT] == 1
 
 
 class TestBlockMining:

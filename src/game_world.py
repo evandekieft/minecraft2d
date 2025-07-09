@@ -111,7 +111,7 @@ class GameWorld:
 
         self.chunks[(chunk_x, chunk_y)] = chunk
 
-    def get_block(self, world_x, world_y):
+    def get_block(self, world_x, world_y) -> Block:
         # Get block at world coordinates
         chunk_x = world_x // self.chunk_size
         chunk_y = world_y // self.chunk_size
@@ -123,7 +123,8 @@ class GameWorld:
         local_x = world_x % self.chunk_size
         local_y = world_y % self.chunk_size
 
-        return chunk.get((local_x, local_y))
+        assert (local_x, local_y) in chunk
+        return chunk[(local_x, local_y)]
 
     def replace_block(self, world_x, world_y, new_block_type):
         """Replace a block at the given coordinates with a new block type"""
@@ -272,8 +273,10 @@ class GameWorld:
             pygame.draw.rect(screen, (64, 64, 64), slot_rect)  # Dark gray
 
             # Draw border (highlight active slot)
-            border_color = WHITE if i == self.player.active_slot else (128, 128, 128)
-            border_width = 3 if i == self.player.active_slot else 1
+            border_color = (
+                WHITE if i == self.player.inventory.active_slot else (128, 128, 128)
+            )
+            border_width = 3 if i == self.player.inventory.active_slot else 1
             pygame.draw.rect(screen, border_color, slot_rect, border_width)
 
             # Draw block if available

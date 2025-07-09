@@ -1,7 +1,8 @@
 from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
 from constants import BLUE
 from sprites import sprite_manager
-import time
+from inventory import Inventory
+from block_type import BlockType
 
 
 class Player:
@@ -10,8 +11,7 @@ class Player:
         self.world_y = 0
         self.color = BLUE  # Fallback color if sprites fail to load
         self.orientation = "north"  # north, south, east, west
-        self.inventory = {}  # {block_type: count}
-        self.active_slot = 0  # Index of active inventory slot (0-4)
+        self.inventory: Inventory = Inventory()
         self.is_mining = False
         self.mining_target = None  # (x, y) coordinates of block being mined
         self.mining_damage_rate = 1.0  # Base mining rate (damage per second)
@@ -201,23 +201,14 @@ class Player:
         self.mining_target = None
         self.just_finished_mining = True
 
-    def add_to_inventory(self, block_type):
-        if block_type in self.inventory:
-            self.inventory[block_type] += 1
-        else:
-            self.inventory[block_type] = 1
+    def add_to_inventory(self, block_type: BlockType):
+        self.inventory.add(block_type)
 
     def get_top_inventory_items(self, count=5):
-        # Get items in stable order (insertion order)
-        items = list(self.inventory.items())
-        return items[:count]
+        return self.inventory.get_top_inventory_items(count)
 
     def get_active_block_type(self):
-        # Get the block type in the active slot
-        top_items = self.get_top_inventory_items()
-        if 0 <= self.active_slot < len(top_items):
-            return top_items[self.active_slot][0]
-        return None
+        return self.inventory.get_active_block_type()
 
     def load_sprites_if_needed(self):
         """Load sprites if not already loaded (after pygame display is initialized)"""
@@ -232,8 +223,8 @@ class Player:
             return self.sprites[self.orientation]
         return None
 
-    def set_active_slot(self, slot):
-        self.active_slot = slot
+    def set_active_slot(self, slot: int):
+        self.inventory.set_active_slot(slot)
 
     def place_block(self, game):
         """Place a block at the target position and remove it from inventory"""
@@ -243,11 +234,8 @@ class Player:
 
         if block_type and target_block and target_block.walkable:
             # Check if we have the block in inventory
-            if block_type in self.inventory and self.inventory[block_type] > 0:
+            if self.inventory.has_block_type(block_type):
                 # Place the block
                 game.replace_block(target_x, target_y, block_type)
                 # Remove one from inventory
-                self.inventory[block_type] -= 1
-                # Remove the block type entirely if count reaches 0
-                if self.inventory[block_type] == 0:
-                    del self.inventory[block_type]
+                self.inventory.remove(block_type)

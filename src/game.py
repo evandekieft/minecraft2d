@@ -386,6 +386,9 @@ class Game:
         # Update camera with new screen dimensions
         self.camera.handle_window_resize(new_width, new_height)
         
+        # Update lighting system with new dimensions
+        lighting_system.handle_window_resize(new_width, new_height, INVENTORY_HEIGHT)
+        
         # Force chunk generation around player to cover new visible area
         # This ensures we have terrain for the potentially larger visible area
         self._generate_chunks_around_player_extended()

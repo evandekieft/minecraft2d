@@ -6,6 +6,7 @@ import pygame
 from src.game import Game
 from src.camera import Camera
 from src.menu import MenuSystem
+from src.lighting import lighting_system
 
 
 class TestWindowResize:
@@ -104,6 +105,25 @@ class TestWindowResize:
         assert menu.window_width == 1200
         assert menu.window_height == 800
         assert menu.screen == new_screen
+
+    def test_lighting_system_resize_updates_dimensions(self, pygame_setup):
+        """Test that lighting system updates darkness surface on resize"""
+        # Get initial surface dimensions
+        initial_width = lighting_system.darkness_surface.get_width()
+        initial_height = lighting_system.darkness_surface.get_height()
+        
+        # Resize lighting system
+        lighting_system.handle_window_resize(1200, 800, 120)
+        
+        # Check that dimensions updated
+        assert lighting_system.window_width == 1200
+        assert lighting_system.window_height == 800
+        assert lighting_system.game_height == 680  # 800 - 120 inventory
+        
+        # Check that darkness surface was recreated with new dimensions
+        assert lighting_system.darkness_surface.get_width() == 1200
+        assert lighting_system.darkness_surface.get_height() == 680
+
 
 
 class TestResizeEdgeCases:

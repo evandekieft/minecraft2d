@@ -20,13 +20,34 @@ class LightSource:
 
 
 class LightingSystem:
-    """Manages the lighting overlay and light sources"""
+    """Manages a darkness overlay system with dynamic light sources.
+
+    This system creates a semi-transparent black overlay across the entire game
+    screen, then "punches holes" in it at the locations of light sources. The
+    result is a realistic lighting effect where areas around light sources appear
+    illuminated while the rest of the world remains in darkness.
+
+    Key concepts:
+    - Darkness overlay: A pygame Surface filled with semi-transparent black
+      (alpha 0-255)
+    - Light holes: Circular areas where the darkness is reduced or eliminated
+    - Light sources: Objects (player, torches, etc.) that create light holes
+    - Gradient falloff: Light intensity decreases smoothly from center to edge
+
+    The system automatically handles camera movement by converting world coordinates
+    to screen coordinates for proper light positioning.
+    """
 
     def __init__(self):
         self.darkness_alpha = 180  # Default darkness level (0-255)
         self.min_darkness = 0  # Minimum darkness (full daylight)
         self.max_darkness = 220  # Maximum darkness (very dark night)
         self.light_sources = []  # List of LightSource objects
+
+        # Track current window dimensions for dynamic resizing
+        self.window_width = WINDOW_SIZE[0]
+        self.window_height = WINDOW_SIZE[1]
+        self.game_height = GAME_HEIGHT
 
         # Create the darkness surface (will be recreated when needed)
         self.darkness_surface = None
@@ -35,7 +56,7 @@ class LightingSystem:
     def _create_darkness_surface(self):
         """Create or recreate the darkness surface"""
         self.darkness_surface = pygame.Surface(
-            (WINDOW_SIZE[0], GAME_HEIGHT), pygame.SRCALPHA
+            (self.window_width, self.game_height), pygame.SRCALPHA
         )
 
     def set_darkness_level(self, alpha):
@@ -97,10 +118,12 @@ class LightingSystem:
 
             # Only create light hole if the light is visible on screen
             if (
-                -light_source.radius <= screen_x <= WINDOW_SIZE[0] + light_source.radius
+                -light_source.radius
+                <= screen_x
+                <= self.window_width + light_source.radius
                 and -light_source.radius
                 <= screen_y
-                <= GAME_HEIGHT + light_source.radius
+                <= self.game_height + light_source.radius
             ):
 
                 # Create a circular light hole
@@ -130,9 +153,10 @@ class LightingSystem:
 
         # Blend the light hole with the darkness surface
         # This creates the "hole" effect by drawing transparent areas
-        self.darkness_surface.blit(
-            light_surface, light_rect, special_flags=pygame.BLEND_RGBA_SUB
-        )
+        if self.darkness_surface is not None:
+            self.darkness_surface.blit(
+                light_surface, light_rect, special_flags=pygame.BLEND_RGBA_SUB
+            )
 
     def apply_lighting(self, screen, camera):
         """Apply the lighting effect to the screen"""
@@ -155,6 +179,15 @@ class LightingSystem:
     def is_nighttime(self):
         """Check if it's currently night time (darkness > 50%)"""
         return self.darkness_alpha > (self.max_darkness / 2)
+    
+    def handle_window_resize(self, new_width, new_height, inventory_height):
+        """Handle window resize by updating dimensions and recreating darkness surface"""
+        self.window_width = new_width
+        self.window_height = new_height
+        self.game_height = new_height - inventory_height
+        
+        # Recreate the darkness surface with new dimensions
+        self._create_darkness_surface()
 
 
 # Global lighting system instance

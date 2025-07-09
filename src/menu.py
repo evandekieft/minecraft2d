@@ -28,10 +28,21 @@ class MenuSystem:
         # Create world input
         self.creating_world = False
         self.new_world_name = ""
-        
+
         # Window dimensions (start with constants, update on resize)
         self.window_width = WINDOW_SIZE[0]
         self.window_height = WINDOW_SIZE[1]
+
+        # Load logo
+        self.logo_original = pygame.image.load("assets/logo/minecraft2d_logo.png")
+        self.logo_original = self.logo_original.convert_alpha()
+        # Resize logo to a fixed width while maintaining aspect ratio
+        logo_width = 700  # Increased since logo is now cropped tighter
+        aspect_ratio = self.logo_original.get_height() / self.logo_original.get_width()
+        logo_height = int(logo_width * aspect_ratio)
+        self.logo = pygame.transform.smoothscale(
+            self.logo_original, (logo_width, logo_height)
+        )
 
     def ensure_saves_directory(self):
         """Create saves directory if it doesn't exist"""
@@ -160,7 +171,7 @@ class MenuSystem:
             self.draw_create_world_menu()
         elif self.current_menu == "pause":
             self.draw_pause_menu()
-    
+
     def handle_window_resize(self, screen, new_width, new_height):
         """Handle window resize for the menu system"""
         self.screen = screen
@@ -169,14 +180,20 @@ class MenuSystem:
 
     def draw_main_menu(self):
         """Draw the main menu"""
-        # Title
-        title_text = self.font_large.render("MINECRAFT 2D", True, WHITE)
-        title_rect = title_text.get_rect(center=(self.window_width // 2, 200))
-        self.screen.blit(title_text, title_rect)
+        # Logo - positioned with good top margin
+        logo_top_margin = 100
+        logo_rect = self.logo.get_rect(
+            center=(
+                self.window_width // 2,
+                logo_top_margin + self.logo.get_height() // 2,
+            )
+        )
+        self.screen.blit(self.logo, logo_rect)
 
-        # Menu options
+        # Menu options - positioned dynamically based on logo
         options = ["Play", "Quit"]
-        start_y = 350
+        # Start menu options below logo with some spacing
+        start_y = logo_rect.bottom + 60  # Reduced spacing since logo is tighter
 
         for i, option in enumerate(options):
             color = (255, 255, 0) if i == self.selected_option else WHITE

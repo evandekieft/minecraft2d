@@ -56,6 +56,12 @@ Tests use pytest conventions. New test files can be added without needing to upd
 
 Avoid calling pygame.init() in newly created tests. Instead, prefer use of the fixture `pygame_setup` in `tests/conftest.py`, which can call this for you.
 
+### Testing Requirements for AI Assistants
+- **ALWAYS run the full test suite** (`python -m pytest`) after making any code changes
+- If tests fail, fix them before considering the task complete
+- Never commit or finish work with failing tests
+- Use specific test commands for focused testing during development, but always end with full suite verification
+
 ---
 
 ## 🤖 Tips for AI Coding Assistants

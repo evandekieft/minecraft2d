@@ -12,6 +12,7 @@ from constants import (
     INVENTORY_HEIGHT,
 )
 from typing import Dict, Tuple
+from block_drawing import draw_block
 
 
 class GameWorld:
@@ -279,14 +280,14 @@ class GameWorld:
             if i < len(top_items):
                 block_type, count = top_items[i]
 
-                # Get block color (import from world to get Block class)
-                temp_block = Block(block_type)
-
-                # Draw block color
-                block_rect = pygame.Rect(
-                    slot_x + 5, slot_y + 5, slot_size - 10, slot_size - 30
+                # Draw block using draw_block from block_drawing.py
+                draw_block(
+                    block_type=block_type,
+                    screen=screen,
+                    screen_x=slot_x + 5,
+                    screen_y=slot_y + 5,
+                    size=slot_size - 10,
                 )
-                pygame.draw.rect(screen, temp_block.type.color, block_rect)
 
                 # Draw count text
                 font = pygame.font.Font(None, 24)

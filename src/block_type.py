@@ -25,6 +25,8 @@ class BlockType(Enum):
     LAVA = "lava"
     DIAMOND = "diamond"
     WATER = "water"
+    STICK = "stick"
+    TORCH = "torch"
 
     @property
     def mining_result(self) -> Optional["BlockType"]:

@@ -8,7 +8,7 @@ from constants import WINDOW_SIZE
 
 class Game:
     """Main game application that manages the game loop and UI"""
-    
+
     def __init__(self, screen=None):
         # Initialize screen (for testing, can be provided)
         if screen is None:
@@ -16,18 +16,18 @@ class Game:
             pygame.display.set_caption("Minecraft2D")
         else:
             self.screen = screen
-        
+
         # Initialize game systems
         self.menu_system = MenuSystem(self.screen)
         self.world_manager = WorldManager()
         self.clock = pygame.time.Clock()
-        
+
         # Game state management
         self.running = True
         self.game_state = "menu"  # "menu", "playing", "paused"
         self.current_world_name = None
         self.current_game_world = None  # The actual GameWorld instance for the world
-        
+
     def run(self):
         """Main game loop"""
         while self.running:
@@ -36,31 +36,37 @@ class Game:
             self._update(dt)
             self._render()
             pygame.display.flip()
-    
+
     def quit(self):
         """Quit the game"""
         # Save before quitting if in game
-        if self.current_game_world and self.current_world_name and self.game_state == "playing":
-            self.world_manager.save_world(self.current_game_world, self.current_world_name)
+        if (
+            self.current_game_world
+            and self.current_world_name
+            and self.game_state == "playing"
+        ):
+            self.world_manager.save_world(
+                self.current_game_world, self.current_world_name
+            )
         self.running = False
         pygame.quit()
         sys.exit()
-    
+
     def _handle_events(self):
         """Handle pygame events"""
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.quit()
-                
+
             elif event.type == KEYDOWN:
                 self._handle_keydown(event)
-                
+
             elif event.type == KEYUP:
                 self._handle_keyup(event)
-                
+
             elif event.type == VIDEORESIZE:
                 self._handle_resize(event)
-    
+
     def _handle_keydown(self, event):
         """Handle keydown events"""
         if self.game_state == "menu":
@@ -81,21 +87,25 @@ class Game:
                         self.current_world_name = data
                         self.game_state = "playing"
                         self.menu_system.reset_to_main_menu()
-                        
+
         elif self.game_state == "playing":
             if event.key == K_ESCAPE:
                 self.menu_system.show_pause_menu()
                 self.game_state = "paused"
             elif self.current_game_world:
-                self.current_game_world.player.handle_keydown(event.key, self.current_game_world)
-                
+                self.current_game_world.player.handle_keydown(
+                    event.key, self.current_game_world
+                )
+
         elif self.game_state == "paused":
             action = self.menu_system.handle_event(event)
             if action == "resume":
                 self.game_state = "playing"
             elif action == "save_and_exit":
                 if self.current_world_name:
-                    self.world_manager.save_world(self.current_game_world, self.current_world_name)
+                    self.world_manager.save_world(
+                        self.current_game_world, self.current_world_name
+                    )
                 self.current_game_world = None
                 self.current_world_name = None
                 self.game_state = "menu"
@@ -105,36 +115,38 @@ class Game:
                 self.current_world_name = None
                 self.game_state = "menu"
                 self.menu_system.reset_to_main_menu()
-    
+
     def _handle_keyup(self, event):
         """Handle keyup events"""
         if self.game_state == "playing" and self.current_game_world:
-            self.current_game_world.player.handle_keyup(event.key, self.current_game_world)
-    
+            self.current_game_world.player.handle_keyup(
+                event.key, self.current_game_world
+            )
+
     def _handle_resize(self, event):
         """Handle window resize events"""
         new_width, new_height = event.w, event.h
-        
+
         # Enforce minimum window size
         min_width, min_height = 800, 600
         new_width = max(new_width, min_width)
         new_height = max(new_height, min_height)
-        
+
         # Update screen
         self.screen = pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
-        
+
         # Update game components if game is active
         if self.current_game_world and self.game_state in ["playing", "paused"]:
             self.current_game_world.handle_window_resize(new_width, new_height)
-        
+
         # Update menu system
         self.menu_system.handle_window_resize(self.screen, new_width, new_height)
-    
+
     def _update(self, dt):
         """Update game state"""
         if self.game_state == "playing" and self.current_game_world:
             self.current_game_world.update_state(dt)
-    
+
     def _render(self):
         """Render the game"""
         if self.game_state == "menu":

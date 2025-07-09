@@ -10,14 +10,15 @@ import random
 import noise
 from terrain_config import TerrainConfig, DEFAULT_CONFIG
 from block_type import BlockType
+from typing import Optional
 
 
 class ConfigurableTerrainGenerator:
     """Enhanced terrain generator driven by configuration"""
 
-    def __init__(self, config: TerrainConfig = None, seed=42):
-        self.config = config or DEFAULT_CONFIG
-        self.seed = seed
+    def __init__(self, config: Optional[TerrainConfig] = None, seed=42):
+        self.config: TerrainConfig = config or DEFAULT_CONFIG
+        self.seed: int = seed
 
         # Validate configuration on initialization
         issues = self.config.validate_configuration()

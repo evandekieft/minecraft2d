@@ -1,6 +1,6 @@
 import pygame
 import math
-from terrain_generator import create_terrain_generator
+from terrain_generator import ConfigurableTerrainGenerator, create_terrain_generator
 from block import Block
 from player import Player
 from camera import Camera
@@ -11,19 +11,23 @@ from constants import (
     WHITE,
     INVENTORY_HEIGHT,
 )
+from typing import Dict, Tuple
 
 
 class GameWorld:
     """Represents a single game world with terrain, player, and game state"""
-    
+
     def __init__(self, terrain_seed=42):
         self.player = Player()
         self.camera = Camera()
-        self.chunks = {}  # Dict to store chunks by (chunk_x, chunk_y)
-        self.chunk_size = 16  # Size of each chunk in blocks
+        # Dict to store chunks by (chunk_x, chunk_y)
+        self.chunks: Dict[Tuple[int, int], Dict[Tuple[int, int], Block]] = {}
+        self.chunk_size: int = 16  # Size of each chunk in blocks
 
         # Initialize terrain generator
-        self.terrain_generator = create_terrain_generator(seed=terrain_seed)
+        self.terrain_generator: ConfigurableTerrainGenerator = create_terrain_generator(
+            seed=terrain_seed
+        )
 
         # Day/night cycle settings
         self.day_duration = 120.0  # 2 minutes for day (in seconds)
@@ -283,7 +287,7 @@ class GameWorld:
                 block_rect = pygame.Rect(
                     slot_x + 5, slot_y + 5, slot_size - 10, slot_size - 30
                 )
-                pygame.draw.rect(screen, temp_block.color, block_rect)
+                pygame.draw.rect(screen, temp_block.type.color, block_rect)
 
                 # Draw count text
                 font = pygame.font.Font(None, 24)

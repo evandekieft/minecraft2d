@@ -54,6 +54,12 @@ Tests use pytest conventions. New test files can be added without needing to upd
 
 Avoid calling pygame.init() in newly created tests. Instead, prefer use of the fixture `pygame_setup` in `tests/conftest.py`, which can call this for you.
 
+## Coding style guide
+
+Use `black` to format all new or modified files.
+
+Use python type hints where they improve clarity, especially on public arguments and return types. There is no need to exhaustively add internal variable annotations of trivial types, as this increases verbosity.
+
 ### Testing Requirements for AI Assistants
 - **ALWAYS run the full test suite** (`pytest -v`) after making any code changes
 - If tests fail, fix them before considering the task complete

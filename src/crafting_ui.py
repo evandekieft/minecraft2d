@@ -31,11 +31,26 @@ class CraftingUI:
         # Clickable areas for craft selection
         self.craft_clickable_rects: List[Tuple[pygame.Rect, BlockType]] = []
 
-    def handle_event(self, event, player_inventory) -> bool:
-        """Handle crafting UI events. Returns True if event was handled."""
+        # Clickable area for output block (for crafting execution)
+        self.output_clickable_rect: Optional[pygame.Rect] = None
+
+    def handle_event(self, event, player_inventory):
+        """Handle crafting UI events. Returns 'craft' if should craft and close, True if handled, False otherwise."""
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
                 mouse_x, mouse_y = event.pos
+
+                # Check if clicking on output block (craft execution)
+                if (
+                    self.output_clickable_rect
+                    and self.output_clickable_rect.collidepoint(mouse_x, mouse_y)
+                    and self.selected_craft
+                ):
+
+                    # Check if player can craft this item
+                    if self._can_craft(self.selected_craft, player_inventory):
+                        self._execute_craft(self.selected_craft, player_inventory)
+                        return "craft"  # Signal to close crafting UI
 
                 # Check if clicking on a craft option
                 for rect, block_type in self.craft_clickable_rects:
@@ -48,6 +63,32 @@ class CraftingUI:
             pass
 
         return False
+
+    def _can_craft(self, block_type: BlockType, player_inventory) -> bool:
+        """Check if player has enough materials to craft this block type"""
+        requirements = crafting_requirements(block_type)
+        if not requirements:
+            return False
+
+        for req_block, req_count in requirements.items():
+            if player_inventory.get_item_count(req_block) < req_count:
+                return False
+
+        return True
+
+    def _execute_craft(self, block_type: BlockType, player_inventory):
+        """Execute the crafting: subtract inputs and add output"""
+        requirements = crafting_requirements(block_type)
+        if not requirements:
+            return
+
+        # Subtract required materials from inventory
+        for req_block, req_count in requirements.items():
+            for _ in range(req_count):
+                player_inventory.remove(req_block)
+
+        # Add crafted item to inventory
+        player_inventory.add(block_type)
 
     def draw(self, screen, player_inventory):
         """Draw the crafting modal"""
@@ -185,14 +226,7 @@ class CraftingUI:
                 block_type = recipe[row][col]
 
                 if block_type:
-                    # Check if player has this block
-                    has_block = player_inventory.get_item_count(block_type) > 0
-
-                    # Count how many of this block type we need vs have
-                    requirements = crafting_requirements(self.selected_craft)
-                    needed_count = (
-                        requirements.get(block_type, 0) if requirements else 0
-                    )
+                    # Get player's inventory count for this block type
                     has_count = player_inventory.get_item_count(block_type)
 
                     # Determine if this specific slot should be red
@@ -238,6 +272,9 @@ class CraftingUI:
             arrow_x - self.box_size // 2, output_y, self.box_size, self.box_size
         )
         pygame.draw.rect(screen, WHITE, output_rect)
+
+        # Store output rectangle for click detection
+        self.output_clickable_rect = output_rect
 
         # Check if output is craftable
         requirements = crafting_requirements(self.selected_craft)

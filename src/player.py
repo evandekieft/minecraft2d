@@ -251,7 +251,7 @@ class Player:
         block_type = self.get_active_block_type()
         target_block = game.get_block(target_x, target_y)
 
-        if block_type and target_block and target_block.walkable:
+        if block_type and target_block and target_block.type.walkable:
             # Check if we have the block in inventory
             if self.inventory.has_block_type(block_type):
                 # Place the block

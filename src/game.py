@@ -89,9 +89,12 @@ class Game:
         """Handle mouse events"""
         if self.game_state == GameState.CRAFTING and self.current_game_world:
             # Handle crafting UI mouse events
-            self.crafting_ui.handle_event(
+            result = self.crafting_ui.handle_event(
                 event, self.current_game_world.player.inventory
             )
+            if result == "craft":
+                # Close crafting UI after successful craft
+                self.game_state = GameState.PLAYING
         else:
             # Handle menu mouse events
             action = self.menu_system.handle_event(event)
@@ -163,9 +166,12 @@ class Game:
                 self.game_state = GameState.PLAYING
             elif self.current_game_world:
                 # Handle crafting UI events
-                self.crafting_ui.handle_event(
+                result = self.crafting_ui.handle_event(
                     event, self.current_game_world.player.inventory
                 )
+                if result == "craft":
+                    # Close crafting UI after successful craft
+                    self.game_state = GameState.PLAYING
 
     def _handle_keyup(self, event):
         """Handle keyup events"""

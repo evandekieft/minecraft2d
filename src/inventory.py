@@ -41,3 +41,6 @@ class Inventory:
 
     def has_block_type(self, type: BlockType):
         return type in self.inventory and self.inventory[type] > 0
+
+    def get_item_count(self, block_type: BlockType):
+        return self.inventory.get(block_type, 0)

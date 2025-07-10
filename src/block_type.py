@@ -100,6 +100,8 @@ class BlockType(Enum):
             BlockType.COAL: "assets/sprites/blocks/coal_block.png",
             BlockType.GRASS: "assets/sprites/blocks/green_concrete_powder.png",
             BlockType.WATER: "assets/sprites/blocks/light_blue_concrete.png",
+            BlockType.STICK: "assets/sprites/items/stick.png",
+            BlockType.TORCH: "assets/sprites/blocks/torch.png",
         }
         sprite = sprites.get(self)
         return sprite_manager.load_sprite(sprite) if sprite else None

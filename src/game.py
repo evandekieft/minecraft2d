@@ -5,12 +5,14 @@ from pygame.locals import (
     KEYDOWN,
     KEYUP,
     K_ESCAPE,
+    K_c,
     VIDEORESIZE,
     MOUSEBUTTONDOWN,
     MOUSEMOTION,
 )
 from menu import MenuSystem
 from world_storage import WorldStorage
+from crafting_ui import CraftingUI
 from constants import WINDOW_SIZE
 from enum import Enum
 
@@ -19,6 +21,7 @@ class GameState(Enum):
     MENU = "menu"
     PLAYING = "playing"
     PAUSED = "paused"
+    CRAFTING = "crafting"
 
 
 class Game:
@@ -35,6 +38,7 @@ class Game:
         # Initialize game systems
         self.world_manager: WorldStorage = WorldStorage()
         self.menu_system: MenuSystem = MenuSystem(self.world_manager)
+        self.crafting_ui: CraftingUI = CraftingUI(WINDOW_SIZE[0], WINDOW_SIZE[1])
 
         self.clock = pygame.time.Clock()
 
@@ -42,9 +46,9 @@ class Game:
         self.running = True
         self.game_state: GameState = GameState.MENU
         self.current_game_world = None  # The actual GameWorld instance for the world
-        
+
         # Do an initial render to populate menu clickable areas (only if we have a real screen)
-        if hasattr(self.screen, 'get_size'):
+        if hasattr(self.screen, "get_size"):
             self._render()
             pygame.display.flip()
 
@@ -83,14 +87,20 @@ class Game:
 
     def _handle_mouse(self, event):
         """Handle mouse events"""
-        action = self.menu_system.handle_event(event)
-        if action:
-            # Reuse the same action handling as keyboard events
-            self._handle_menu_action(action)
-    
+        if self.game_state == GameState.CRAFTING and self.current_game_world:
+            # Handle crafting UI mouse events
+            self.crafting_ui.handle_event(
+                event, self.current_game_world.player.inventory
+            )
+        else:
+            # Handle menu mouse events
+            action = self.menu_system.handle_event(event)
+            if action:
+                # Reuse the same action handling as keyboard events
+                self._handle_menu_action(action)
+
     def _handle_menu_action(self, action):
         """Handle menu actions (from both keyboard and mouse)"""
-        print(f"[DEBUG] _handle_menu_action called with: {action}")
         if action == "quit":
             self.quit()
         elif action == "resume":
@@ -110,9 +120,7 @@ class Game:
                         self.menu_system.reset_to_main_menu()
             elif action_type == "create_world":
                 # Create world without saving it yet (no name)
-                self.current_game_world = (
-                    self.world_manager.create_new_world_unsaved()
-                )
+                self.current_game_world = self.world_manager.create_new_world_unsaved()
                 if self.current_game_world:
                     self.current_world_name = None  # No name yet
                     self.game_state = GameState.PLAYING
@@ -138,6 +146,8 @@ class Game:
             if event.key == K_ESCAPE:
                 self.menu_system.show_pause_menu()
                 self.game_state = GameState.PAUSED
+            elif event.key == K_c:
+                self.game_state = GameState.CRAFTING
             elif self.current_game_world:
                 self.current_game_world.player.handle_keydown(
                     event.key, self.current_game_world
@@ -147,6 +157,15 @@ class Game:
             action = self.menu_system.handle_event(event)
             if action:
                 self._handle_menu_action(action)
+
+        elif self.game_state == GameState.CRAFTING:
+            if event.key == K_ESCAPE or event.key == K_c:
+                self.game_state = GameState.PLAYING
+            elif self.current_game_world:
+                # Handle crafting UI events
+                self.crafting_ui.handle_event(
+                    event, self.current_game_world.player.inventory
+                )
 
     def _handle_keyup(self, event):
         """Handle keyup events"""
@@ -171,11 +190,15 @@ class Game:
         if self.current_game_world and self.game_state in [
             GameState.PLAYING,
             GameState.PAUSED,
+            GameState.CRAFTING,
         ]:
             self.current_game_world.handle_window_resize(new_width, new_height)
 
         # Update menu system
         self.menu_system.handle_window_resize(new_width, new_height)
+
+        # Update crafting UI
+        self.crafting_ui.handle_window_resize(new_width, new_height)
 
     def _update(self, dt):
         """Update game state"""
@@ -194,3 +217,11 @@ class Game:
                 self.current_game_world.draw(self.screen)
             # Draw pause menu on top
             self.menu_system.draw(self.screen)
+        elif self.game_state == GameState.CRAFTING:
+            # Draw game in background (frozen)
+            if self.current_game_world:
+                self.current_game_world.draw(self.screen)
+                # Draw crafting modal on top
+                self.crafting_ui.draw(
+                    self.screen, self.current_game_world.player.inventory
+                )

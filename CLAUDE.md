@@ -24,19 +24,22 @@ For general project info, installation, and gameplay overview, refer to **README
 
 Here’s where major game systems live in the codebase:
 
-- src/main.py:        Main entry point; initializes and runs Game object
-- src/game.py:        Top level pygame while loop, event handling. 
-- src/game_world.py:  Core gameplay logic with primary draw and update functions.
-- src/block.py:       Block types, properties, and rendering logic
-- src/constants.py:   Game-wide constants and configuration values
-- src/camera.py:      Camera movement and viewport management	
-- src/lighting.py:    Lighting effects and day/night cycle
-- src/menu.py:        Game menus and UI navigation
-- src/player.py:	   Player movement, controls, and animation
-- src/sprites.py:	   Sprite loading and management
+- src/main.py:              Main entry point; initializes and runs Game object
+- src/game.py:              Top level pygame while loop, event handling. 
+- src/game_world.py:        Core gameplay logic with primary draw and update functions.
+- src/block.py:       B     lock related state logic
+- src/block_type.py:        All block type definitions and properties
+- src/crafting.py:          Crafting rules (what blocks make other blocks)
+- src/constants.py:         Game-wide constants and configuration values
+- src/camera.py:            Camera movement and viewport management	
+- src/lighting.py:          Lighting effects and day/night cycle
+- src/menu.py:              Game menus and UI navigation
+- src/player.py:	        Player movement, controls, and animation
+- src/inventory.py          Player's inventory (counts of block types and one "active" type)
+- src/sprites.py:	        Sprite loading and management
 - src/terrain_generator.py:	Procedural terrain generation (Perlin noise based)
 - src/terrain_config.py:	Configuration and parameters for terrain_generator.py
-- src/world_manager.py:	World state management and chunk loading
+- src/world_storage.py:	    Save/load worlds to json files on disk
 
 > ✅ Refer to the actual source code for implementation details.
 
@@ -45,7 +48,7 @@ Here’s where major game systems live in the codebase:
 ## 🧪 Testing & Debugging Notes
 
 Use `pytest` for testing. Tests are located under `tests/` and named `test_*.py`. 
-You're expected to run pytest from the root project directory.
+You're expected to run pytest from the root project directory (pytest.ini configs "pythonpath = src")
 
 The test suite is comprehensive and fast. The full suite should be run before declaring work finished.
 
@@ -71,6 +74,7 @@ Use python type hints where they improve clarity, especially on public arguments
 ## 🤖 Tips for AI Coding Assistants
 When generating code for this project:
 - Prioritize clarity and readability.
+- Use the pytest suite to check your work. There's no need to smoke test by seeing if the game's main method can start, since this is usually slower than the test suite.
 - Avoid introducing new external dependencies unless explicitly requested.
 - Use functional decomposition: split large functions into smaller helpers.
 - Include docstrings and inline comments explaining assumptions.

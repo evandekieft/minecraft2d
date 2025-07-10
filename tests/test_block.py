@@ -1,20 +1,8 @@
-import pytest
 from unittest.mock import Mock
 from block import Block
 from block_type import BlockType
 from player import Player
 from inventory import Inventory
-from constants import (
-    GREEN,
-    LIGHT_BROWN,
-    DARK_BROWN,
-    WATER_BLUE,
-    BRIGHT_BLUE,
-    RED,
-    BLACK,
-    SAND_COLOR,
-    GRAY,
-)
 
 
 class TestBlock:

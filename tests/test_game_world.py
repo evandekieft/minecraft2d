@@ -1,4 +1,3 @@
-import pygame
 from game_world import GameWorld
 from player import Player
 from camera import Camera
@@ -194,7 +193,9 @@ class TestGameWorldIntegration:
         game_world.player.world_y = 20
 
         # Update camera
-        game_world.camera.update(game_world.player.world_x, game_world.player.world_y, 0.016)
+        game_world.camera.update(
+            game_world.player.world_x, game_world.player.world_y, 0.016
+        )
 
         # Camera should move toward player
         assert game_world.camera.x != 0.0 or game_world.camera.y != 0.0
@@ -268,7 +269,9 @@ class TestGameWorldIntegration:
         assert final_chunks > initial_chunks
 
         # Player should be able to access blocks in new area
-        block = game_world.get_block(game_world.player.world_x, game_world.player.world_y)
+        block = game_world.get_block(
+            game_world.player.world_x, game_world.player.world_y
+        )
         assert block is not None
         assert block.type in [BlockType.GRASS, BlockType.WOOD]
 
@@ -284,7 +287,9 @@ class TestGameWorldIntegration:
         game_world.player.world_y = 10
 
         # Update camera
-        game_world.camera.update(game_world.player.world_x, game_world.player.world_y, 0.016)
+        game_world.camera.update(
+            game_world.player.world_x, game_world.player.world_y, 0.016
+        )
 
         # State should be maintained
         assert game_world.player.world_x == 5
@@ -311,7 +316,16 @@ class TestGameWorldIntegration:
             block = game_world.get_block(x, y)
             assert block is not None
             # Block should be a valid terrain type
-            valid_types = [BlockType.GRASS, BlockType.WOOD, BlockType.SAND, BlockType.STONE, BlockType.WATER, BlockType.COAL, BlockType.DIAMOND, BlockType.LAVA]
+            valid_types = [
+                BlockType.GRASS,
+                BlockType.WOOD,
+                BlockType.SAND,
+                BlockType.STONE,
+                BlockType.WATER,
+                BlockType.COAL,
+                BlockType.DIAMOND,
+                BlockType.LAVA,
+            ]
             assert block.type in valid_types
 
     def test_multiple_chunk_generation_cycles(self):
@@ -328,7 +342,13 @@ class TestGameWorldIntegration:
             # Should always be able to access player position
             block = game_world.get_block(x, y)
             assert block is not None
-            assert block.type in [BlockType.GRASS, BlockType.WOOD, BlockType.SAND, BlockType.WATER, BlockType.STONE]
+            assert block.type in [
+                BlockType.GRASS,
+                BlockType.WOOD,
+                BlockType.SAND,
+                BlockType.WATER,
+                BlockType.STONE,
+            ]
 
         # Should have generated many chunks
         assert len(game_world.chunks) > 9  # More than initial 3x3
@@ -344,7 +364,9 @@ class TestBlockReplacement:
         original_type = original_block.type
 
         # Replace it with a different type
-        new_type = BlockType.DIRT if original_type != BlockType.DIRT else BlockType.GRASS
+        new_type = (
+            BlockType.DIRT if original_type != BlockType.DIRT else BlockType.GRASS
+        )
         result = game_world.replace_block(0, 0, new_type)
 
         assert result is True
@@ -378,7 +400,15 @@ class TestBlockReplacement:
         game_world = GameWorld()
 
         # Test replacing with all new block types
-        new_block_types = [BlockType.SAND, BlockType.WOOD, BlockType.STONE, BlockType.COAL, BlockType.LAVA, BlockType.DIAMOND, BlockType.WATER]
+        new_block_types = [
+            BlockType.SAND,
+            BlockType.WOOD,
+            BlockType.STONE,
+            BlockType.COAL,
+            BlockType.LAVA,
+            BlockType.DIAMOND,
+            BlockType.WATER,
+        ]
 
         for i, block_type in enumerate(new_block_types):
             x, y = i, 0
@@ -410,4 +440,6 @@ class TestBlockReplacement:
             assert (
                 block.type.walkable == expected_walkable
             ), f"{block_type} walkable mismatch"
-            assert block.type.minable == expected_minable, f"{block_type} minable mismatch"
+            assert (
+                block.type.minable == expected_minable
+            ), f"{block_type} minable mismatch"

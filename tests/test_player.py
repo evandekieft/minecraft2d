@@ -3,7 +3,6 @@ from unittest.mock import Mock
 from pygame.locals import K_a, K_d, K_w, K_s
 from player import Player
 from block_type import BlockType
-from inventory import Inventory
 
 
 class TestPlayer:
@@ -11,7 +10,7 @@ class TestPlayer:
         player = Player()
         assert player.world_x == 0
         assert player.world_y == 0
-        assert player.orientation == "north"
+        assert player.orientation == "south"
 
     @pytest.mark.parametrize(
         "key,expected_orientation",
@@ -236,7 +235,7 @@ class TestMining:
         player.start_mining(mock_game)
 
         assert player.is_mining is True
-        assert player.mining_target == (0, -1)  # North of origin
+        assert player.mining_target == (0, 1)  # South of origin (default orientation)
 
     def test_start_mining_non_minable_block(self):
         player = Player()

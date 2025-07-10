@@ -1,4 +1,19 @@
-from pygame.locals import K_w, K_a, K_s, K_d, K_SPACE, K_1, K_2, K_3, K_4, K_5
+from pygame.locals import (
+    K_w,
+    K_a,
+    K_s,
+    K_d,
+    K_SPACE,
+    K_1,
+    K_2,
+    K_3,
+    K_4,
+    K_5,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+)
 from sprites import sprite_manager
 from inventory import Inventory
 from block_type import BlockType
@@ -10,7 +25,7 @@ class Player:
     def __init__(self):
         self.world_x = 0
         self.world_y = 0
-        self.orientation = "north"  # north, south, east, west
+        self.orientation = "south"  # north, south, east, west
         self.inventory: Inventory = Inventory()
         self.is_mining = False
         self.mining_target = None  # (x, y) coordinates of block being mined
@@ -29,18 +44,18 @@ class Player:
         self.move_interval = 1.0 / self.movement_speed  # Time between moves
 
     def handle_keydown(self, key, game=None):
-        # Handle movement keys
-        if key in [K_w, K_a, K_s, K_d]:
+        # Handle movement keys (both WASD and arrow keys)
+        if key in [K_w, K_a, K_s, K_d, K_UP, K_DOWN, K_LEFT, K_RIGHT]:
             self.pressed_keys.add(key)
             # Handle immediate orientation change if needed
             target_orientation = None
-            if key == K_a:
+            if key == K_a or key == K_LEFT:
                 target_orientation = "west"
-            elif key == K_d:
+            elif key == K_d or key == K_RIGHT:
                 target_orientation = "east"
-            elif key == K_w:
+            elif key == K_w or key == K_UP:
                 target_orientation = "north"
-            elif key == K_s:
+            elif key == K_s or key == K_DOWN:
                 target_orientation = "south"
 
             if target_orientation and self.orientation != target_orientation:
@@ -62,8 +77,8 @@ class Player:
             self.set_active_slot(4)
 
     def handle_keyup(self, key, game):
-        # Handle movement keys
-        if key in [K_w, K_a, K_s, K_d]:
+        # Handle movement keys (both WASD and arrow keys)
+        if key in [K_w, K_a, K_s, K_d, K_UP, K_DOWN, K_LEFT, K_RIGHT]:
             self.pressed_keys.discard(key)
         elif key == K_SPACE:
             if self.is_mining:
@@ -96,17 +111,17 @@ class Player:
         target_orientation = None
 
         # Priority: most recent key press determines direction
-        # Check keys in order of typical priority
-        if K_w in self.pressed_keys:
+        # Check keys in order of typical priority (check both WASD and arrow keys)
+        if K_w in self.pressed_keys or K_UP in self.pressed_keys:
             target_orientation = "north"
             dy = -1
-        elif K_s in self.pressed_keys:
+        elif K_s in self.pressed_keys or K_DOWN in self.pressed_keys:
             target_orientation = "south"
             dy = 1
-        elif K_a in self.pressed_keys:
+        elif K_a in self.pressed_keys or K_LEFT in self.pressed_keys:
             target_orientation = "west"
             dx = -1
-        elif K_d in self.pressed_keys:
+        elif K_d in self.pressed_keys or K_RIGHT in self.pressed_keys:
             target_orientation = "east"
             dx = 1
 

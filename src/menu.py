@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import (
     KEYDOWN,
+    MOUSEBUTTONDOWN,
+    MOUSEMOTION,
     K_ESCAPE,
     K_RETURN,
     K_UP,
@@ -43,6 +45,17 @@ class MenuSystem:
             self.logo_original, (logo_width, logo_height)
         )
 
+        # Track clickable rectangles for menu options
+        self.clickable_rects = []
+
+        # Input state for saving worlds
+        self.saving_world = False
+        self.save_world_name = ""
+
+        # Input state for creating worlds
+        self.creating_world = False
+        self.new_world_name = ""
+
     def handle_event(self, event):
         """Handle menu events, returns action or None"""
         if event.type == KEYDOWN:
@@ -54,6 +67,50 @@ class MenuSystem:
                 return self.handle_pause_menu_input(event.key)
             elif self.current_menu == MenuOption.SAVE_WORLD:
                 return self.handle_save_world_input(event.key)
+        elif event.type == MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                mouse_x, mouse_y = event.pos
+                # Check each clickable rectangle
+                for i, rect in enumerate(self.clickable_rects):
+                    if rect.collidepoint(mouse_x, mouse_y):
+                        self.selected_option = i
+                        return self._activate_selected_option()
+        elif event.type == MOUSEMOTION:
+            mouse_x, mouse_y = event.pos
+            # Update selection on hover
+            for i, rect in enumerate(self.clickable_rects):
+                if rect.collidepoint(mouse_x, mouse_y):
+                    self.selected_option = i
+                    break
+        return None
+
+    def _activate_selected_option(self):
+        """Activate the currently selected menu option"""
+        if self.current_menu == MenuOption.MAIN:
+            if self.selected_option == 0:  # Play
+                self.current_menu = MenuOption.WORLD_SELECT
+                self.selected_option = 0
+                return None
+            elif self.selected_option == 1:  # Quit
+                return "quit"
+        elif self.current_menu == MenuOption.WORLD_SELECT:
+            worlds = self.world_storage.get_world_list()
+            if self.selected_option == len(worlds):  # Create New World
+                return ("create_world", None)
+            else:  # Load existing world
+                world_name = worlds[self.selected_option]
+                return ("load_world", world_name)
+        elif self.current_menu == MenuOption.PAUSE:
+            if self.selected_option == 0:  # Resume
+                return "resume"
+            elif self.selected_option == 1:  # Save & Exit to Menu
+                self.current_menu = MenuOption.SAVE_WORLD
+                self.saving_world = True
+                self.save_world_name = ""
+                self.selected_option = 0
+                return None
+            elif self.selected_option == 2:  # Exit without Saving
+                return "exit_no_save"
         return None
 
     def handle_main_menu_input(self, key):
@@ -63,11 +120,7 @@ class MenuSystem:
         elif key == K_DOWN:
             self.selected_option = min(1, self.selected_option + 1)
         elif key == K_RETURN:
-            if self.selected_option == 0:  # Play
-                self.current_menu = MenuOption.WORLD_SELECT
-                self.selected_option = 0
-            elif self.selected_option == 1:  # Quit
-                return "quit"
+            return self._activate_selected_option()
         return None
 
     def handle_world_select_input(self, key):
@@ -80,12 +133,7 @@ class MenuSystem:
         elif key == K_DOWN:
             self.selected_option = min(max_options - 1, self.selected_option + 1)
         elif key == K_RETURN:
-            if self.selected_option == len(worlds):  # Create New World
-                # Directly create world without name prompt
-                return ("create_world", None)
-            else:  # Load existing world
-                world_name = worlds[self.selected_option]
-                return ("load_world", world_name)
+            return self._activate_selected_option()
         elif key == K_DELETE and worlds:
             # Delete selected world
             if self.selected_option < len(worlds):
@@ -127,17 +175,7 @@ class MenuSystem:
         elif key == K_DOWN:
             self.selected_option = min(2, self.selected_option + 1)
         elif key == K_RETURN:
-            if self.selected_option == 0:  # Resume
-                return "resume"
-            elif self.selected_option == 1:  # Save & Exit to Menu
-                # Switch to save world menu to get name
-                self.current_menu = MenuOption.SAVE_WORLD
-                self.saving_world = True
-                self.save_world_name = ""
-                self.selected_option = 0
-                return None
-            elif self.selected_option == 2:  # Exit without Saving
-                return "exit_no_save"
+            return self._activate_selected_option()
         elif key == K_ESCAPE:
             return "resume"
         return None
@@ -183,6 +221,9 @@ class MenuSystem:
 
     def _draw_main_menu(self, screen):
         """Draw the main menu"""
+        # Clear clickable rectangles
+        self.clickable_rects = []
+
         # Logo - positioned with good top margin
         logo_top_margin = 100
         logo_rect = self.logo.get_rect(
@@ -204,8 +245,14 @@ class MenuSystem:
             text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 60))
             screen.blit(text, text_rect)
 
+            # Store clickable rectangle
+            self.clickable_rects.append(text_rect)
+
     def _draw_world_select_menu(self, screen):
         """Draw the world selection menu"""
+        # Clear clickable rectangles
+        self.clickable_rects = []
+
         # Title
         title_text = self.font_large.render("Select World", True, WHITE)
         title_rect = title_text.get_rect(center=(self.window_width // 2, 100))
@@ -221,6 +268,9 @@ class MenuSystem:
             text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 50))
             screen.blit(text, text_rect)
 
+            # Store clickable rectangle
+            self.clickable_rects.append(text_rect)
+
         # Create New World option
         create_color = (255, 255, 0) if len(worlds) == self.selected_option else WHITE
         create_text = self.font_medium.render("Create New World", True, create_color)
@@ -228,6 +278,9 @@ class MenuSystem:
             center=(self.window_width // 2, start_y + len(worlds) * 50)
         )
         screen.blit(create_text, create_rect)
+
+        # Store clickable rectangle for Create New World
+        self.clickable_rects.append(create_rect)
 
         # Instructions
         instructions = [
@@ -245,6 +298,9 @@ class MenuSystem:
 
     def _draw_pause_menu(self, screen):
         """Draw the pause menu"""
+        # Clear clickable rectangles
+        self.clickable_rects = []
+
         # Semi-transparent overlay
         overlay = pygame.Surface((self.window_width, self.window_height))
         overlay.set_alpha(128)
@@ -265,6 +321,9 @@ class MenuSystem:
             text = self.font_medium.render(option, True, color)
             text_rect = text.get_rect(center=(self.window_width // 2, start_y + i * 60))
             screen.blit(text, text_rect)
+
+            # Store clickable rectangle
+            self.clickable_rects.append(text_rect)
 
     def _draw_save_world_menu(self, screen):
         """Draw the save world menu"""

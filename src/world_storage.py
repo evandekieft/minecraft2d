@@ -70,7 +70,7 @@ class WorldStorage:
         player_data = world_data.get("player", {})
         game.player.world_x = player_data.get("world_x", 0)
         game.player.world_y = player_data.get("world_y", 0)
-        game.player.orientation = player_data.get("orientation", "north")
+        game.player.orientation = player_data.get("orientation", "south")
 
         stored_inventory = player_data.get("inventory", {})
         stored_active_slot = player_data.get("active_slot", 0)

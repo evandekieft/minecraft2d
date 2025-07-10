@@ -1,6 +1,14 @@
 import pygame
 import sys
-from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, VIDEORESIZE
+from pygame.locals import (
+    QUIT,
+    KEYDOWN,
+    KEYUP,
+    K_ESCAPE,
+    VIDEORESIZE,
+    MOUSEBUTTONDOWN,
+    MOUSEMOTION,
+)
 from menu import MenuSystem
 from world_storage import WorldStorage
 from constants import WINDOW_SIZE
@@ -34,6 +42,11 @@ class Game:
         self.running = True
         self.game_state: GameState = GameState.MENU
         self.current_game_world = None  # The actual GameWorld instance for the world
+        
+        # Do an initial render to populate menu clickable areas (only if we have a real screen)
+        if hasattr(self.screen, 'get_size'):
+            self._render()
+            pygame.display.flip()
 
     def run(self):
         """Main game loop"""
@@ -65,29 +78,61 @@ class Game:
             elif event.type == VIDEORESIZE:
                 self._handle_resize(event)
 
+            elif event.type in (MOUSEBUTTONDOWN, MOUSEMOTION):
+                self._handle_mouse(event)
+
+    def _handle_mouse(self, event):
+        """Handle mouse events"""
+        action = self.menu_system.handle_event(event)
+        if action:
+            # Reuse the same action handling as keyboard events
+            self._handle_menu_action(action)
+    
+    def _handle_menu_action(self, action):
+        """Handle menu actions (from both keyboard and mouse)"""
+        print(f"[DEBUG] _handle_menu_action called with: {action}")
+        if action == "quit":
+            self.quit()
+        elif action == "resume":
+            self.game_state = GameState.PLAYING
+        elif action == "exit_no_save":
+            self.current_game_world = None
+            self.current_world_name = None
+            self.game_state = GameState.MENU
+            self.menu_system.reset_to_main_menu()
+        elif isinstance(action, tuple):
+            action_type, data = action
+            if action_type == "load_world":
+                if data:
+                    self.current_game_world = self.world_manager.load_world(data)
+                    if self.current_game_world:
+                        self.game_state = GameState.PLAYING
+                        self.menu_system.reset_to_main_menu()
+            elif action_type == "create_world":
+                # Create world without saving it yet (no name)
+                self.current_game_world = (
+                    self.world_manager.create_new_world_unsaved()
+                )
+                if self.current_game_world:
+                    self.current_world_name = None  # No name yet
+                    self.game_state = GameState.PLAYING
+                    self.menu_system.reset_to_main_menu()
+            elif action_type == "save_and_exit":
+                # Save with the provided world name
+                world_name = data
+                if self.current_game_world:
+                    self.world_manager.save_world(self.current_game_world, world_name)
+                self.current_game_world = None
+                self.current_world_name = None
+                self.game_state = GameState.MENU
+                self.menu_system.reset_to_main_menu()
+
     def _handle_keydown(self, event):
         """Handle keydown events"""
         if self.game_state == GameState.MENU:
             action = self.menu_system.handle_event(event)
-            if action == "quit":
-                self.quit()
-            elif isinstance(action, tuple):
-                action_type, data = action
-                if action_type == "load_world":
-                    if data:
-                        self.current_game_world = self.world_manager.load_world(data)
-                        if self.current_game_world:
-                            self.game_state = GameState.PLAYING
-                            self.menu_system.reset_to_main_menu()
-                elif action_type == "create_world":
-                    # Create world without saving it yet (no name)
-                    self.current_game_world = (
-                        self.world_manager.create_new_world_unsaved()
-                    )
-                    if self.current_game_world:
-                        self.current_world_name = None  # No name yet
-                        self.game_state = GameState.PLAYING
-                        self.menu_system.reset_to_main_menu()
+            if action:
+                self._handle_menu_action(action)
 
         elif self.game_state == GameState.PLAYING:
             if event.key == K_ESCAPE:
@@ -100,22 +145,8 @@ class Game:
 
         elif self.game_state == GameState.PAUSED:
             action = self.menu_system.handle_event(event)
-            if action == "resume":
-                self.game_state = GameState.PLAYING
-            elif isinstance(action, tuple) and action[0] == "save_and_exit":
-                # Save with the provided world name
-                world_name = action[1]
-                if self.current_game_world:
-                    self.world_manager.save_world(self.current_game_world, world_name)
-                self.current_game_world = None
-                self.current_world_name = None
-                self.game_state = GameState.MENU
-                self.menu_system.reset_to_main_menu()
-            elif action == "exit_no_save":
-                self.current_game_world = None
-                self.current_world_name = None
-                self.game_state = GameState.MENU
-                self.menu_system.reset_to_main_menu()
+            if action:
+                self._handle_menu_action(action)
 
     def _handle_keyup(self, event):
         """Handle keyup events"""

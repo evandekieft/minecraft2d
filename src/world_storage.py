@@ -6,7 +6,7 @@ from block import Block
 from block_type import BlockType
 
 
-class WorldManager:
+class WorldStorage:
     def __init__(self):
         self.saves_dir = "saves"
         self.ensure_saves_directory()
@@ -16,25 +16,26 @@ class WorldManager:
         if not os.path.exists(self.saves_dir):
             os.makedirs(self.saves_dir)
 
-    def save_world(self, game, world_name):
+    def save_world(self, world: GameWorld, world_name: str):
         """Save the current game state to a file"""
 
+        inventory = {k.value: v for k, v in world.player.inventory.inventory.items()}
         # Prepare world data
         world_data = {
             "world_name": world_name,
             "player": {
-                "world_x": game.player.world_x,
-                "world_y": game.player.world_y,
-                "orientation": game.player.orientation,
-                "inventory": game.player.inventory.inventory,
-                "active_slot": game.player.inventory.active_slot,
+                "world_x": world.player.world_x,
+                "world_y": world.player.world_y,
+                "orientation": world.player.orientation,
+                "inventory": inventory,
+                "active_slot": world.player.inventory.active_slot,
             },
             "chunks": {},
-            "terrain_seed": game.terrain_generator.seed,
+            "terrain_seed": world.terrain_generator.seed,
         }
 
         # Save chunks
-        for (chunk_x, chunk_y), chunk in game.chunks.items():
+        for (chunk_x, chunk_y), chunk in world.chunks.items():
             chunk_key = f"{chunk_x},{chunk_y}"
             chunk_data = {}
 
@@ -54,7 +55,7 @@ class WorldManager:
 
         return True
 
-    def load_world(self, world_name) -> GameWorld:
+    def load_world(self, world_name: str) -> GameWorld:
         """Load a world from file and return a GameWorld instance"""
 
         filepath = os.path.join(self.saves_dir, f"{world_name}.json")
@@ -70,8 +71,12 @@ class WorldManager:
         game.player.world_x = player_data.get("world_x", 0)
         game.player.world_y = player_data.get("world_y", 0)
         game.player.orientation = player_data.get("orientation", "north")
+
+        stored_inventory = player_data.get("inventory", {})
+        stored_active_slot = player_data.get("active_slot", 0)
+
         game.player.inventory = Inventory(
-            player_data.get("inventory", {}), player_data.get("active_slot", 0)
+            {BlockType(k): v for k, v in stored_inventory.items()}, stored_active_slot
         )
 
         # Clear auto-generated chunks and load saved ones
@@ -99,6 +104,32 @@ class WorldManager:
 
         return game
 
+    def delete_world(self, world_name: str):
+        """Delete a world save file"""
+
+        filepath = os.path.join(self.saves_dir, f"{world_name}.json")
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return True
+        return False
+
+    def get_world_list(self):
+        """Get list of saved worlds by name"""
+        worlds = []
+
+        if os.path.exists(self.saves_dir):
+            for filename in os.listdir(self.saves_dir):
+                if filename.endswith(".json"):
+                    world_name = filename[:-5]  # Remove .json extension
+                    worlds.append(world_name)
+
+        return sorted(worlds)
+
+    def world_exists(self, world_name: str):
+        """Check if a world save file exists"""
+        filepath = os.path.join(self.saves_dir, f"{world_name}.json")
+        return os.path.exists(filepath)
+
     def create_new_world_unsaved(self, terrain_seed=None):
         """Create a new world without saving it (no name yet)"""
 
@@ -110,31 +141,3 @@ class WorldManager:
         # Create new game world instance
         game = GameWorld(terrain_seed=terrain_seed)
         return game
-
-    def delete_world(self, world_name):
-        """Delete a world save file"""
-
-        filepath = os.path.join(self.saves_dir, f"{world_name}.json")
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            return True
-        return False
-
-    def get_world_list(self):
-        """Get list of saved worlds"""
-        worlds = []
-        try:
-            if os.path.exists(self.saves_dir):
-                for filename in os.listdir(self.saves_dir):
-                    if filename.endswith(".json"):
-                        world_name = filename[:-5]  # Remove .json extension
-                        worlds.append(world_name)
-        except Exception as e:
-            print(f"Error listing worlds: {e}")
-
-        return sorted(worlds)
-
-    def world_exists(self, world_name):
-        """Check if a world save file exists"""
-        filepath = os.path.join(self.saves_dir, f"{world_name}.json")
-        return os.path.exists(filepath)

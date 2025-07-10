@@ -2,7 +2,7 @@ import pygame
 import sys
 from pygame.locals import QUIT, KEYDOWN, KEYUP, K_ESCAPE, VIDEORESIZE
 from menu import MenuSystem
-from world_manager import WorldManager
+from world_storage import WorldStorage
 from constants import WINDOW_SIZE
 from enum import Enum
 
@@ -25,8 +25,9 @@ class Game:
             self.screen = screen
 
         # Initialize game systems
-        self.menu_system: MenuSystem = MenuSystem(self.screen)
-        self.world_manager: WorldManager = WorldManager()
+        self.world_manager: WorldStorage = WorldStorage()
+        self.menu_system: MenuSystem = MenuSystem(self.world_manager)
+
         self.clock = pygame.time.Clock()
 
         # Game state management
@@ -73,10 +74,11 @@ class Game:
             elif isinstance(action, tuple):
                 action_type, data = action
                 if action_type == "load_world":
-                    self.current_game_world = self.world_manager.load_world(data)
-                    if self.current_game_world:
-                        self.game_state = GameState.PLAYING
-                        self.menu_system.reset_to_main_menu()
+                    if data:
+                        self.current_game_world = self.world_manager.load_world(data)
+                        if self.current_game_world:
+                            self.game_state = GameState.PLAYING
+                            self.menu_system.reset_to_main_menu()
                 elif action_type == "create_world":
                     # Create world without saving it yet (no name)
                     self.current_game_world = (
@@ -103,7 +105,8 @@ class Game:
             elif isinstance(action, tuple) and action[0] == "save_and_exit":
                 # Save with the provided world name
                 world_name = action[1]
-                self.world_manager.save_world(self.current_game_world, world_name)
+                if self.current_game_world:
+                    self.world_manager.save_world(self.current_game_world, world_name)
                 self.current_game_world = None
                 self.current_world_name = None
                 self.game_state = GameState.MENU
@@ -141,7 +144,7 @@ class Game:
             self.current_game_world.handle_window_resize(new_width, new_height)
 
         # Update menu system
-        self.menu_system.handle_window_resize(self.screen, new_width, new_height)
+        self.menu_system.handle_window_resize(new_width, new_height)
 
     def _update(self, dt):
         """Update game state"""
@@ -151,7 +154,7 @@ class Game:
     def _render(self):
         """Render the game"""
         if self.game_state == GameState.MENU:
-            self.menu_system.draw()
+            self.menu_system.draw(self.screen)
         elif self.game_state == GameState.PLAYING and self.current_game_world:
             self.current_game_world.draw(self.screen)
         elif self.game_state == GameState.PAUSED:
@@ -159,4 +162,4 @@ class Game:
             if self.current_game_world:
                 self.current_game_world.draw(self.screen)
             # Draw pause menu on top
-            self.menu_system.draw()
+            self.menu_system.draw(self.screen)
